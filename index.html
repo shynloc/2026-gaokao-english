@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>2026 新高考英语冲刺工作台</title>
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <header class="topbar">
+      <a class="brand" href="#home" aria-label="返回首页">
+        <span class="brand-mark">E26</span>
+        <span>
+          <strong>新高考英语</strong>
+          <small>2026 冲刺工作台</small>
+        </span>
+      </a>
+      <nav class="nav" aria-label="主导航">
+        <a href="#plan">计划</a>
+        <a href="#skills">专项</a>
+        <a href="#practice">练习</a>
+        <a href="#mock">模拟</a>
+        <a href="#report">报告</a>
+        <a href="#library">内容库</a>
+        <a href="#writing">写作</a>
+        <a href="#mistakes">错题</a>
+      </nav>
+      <button class="icon-button" id="themeToggle" type="button" aria-label="切换深浅色">
+        <span aria-hidden="true">◐</span>
+      </button>
+    </header>
+
+    <main id="home">
+      <section class="hero-section">
+        <div class="hero-copy">
+          <p class="eyebrow">全国通用 · 新高考英语</p>
+          <h1>把最后一轮复习变成每天可执行的提分动作。</h1>
+          <p class="hero-text">
+            面向 2026 高考英语冲刺，围绕阅读、七选五、完形、语法填空、应用文、读后续写和词汇复盘，建立“练习 - 诊断 - 回炉”的每日闭环。
+          </p>
+          <div class="hero-actions">
+            <a class="primary-action" href="#today">开始今日任务</a>
+            <a class="secondary-action" href="#practice">进入限时练习</a>
+          </div>
+        </div>
+
+        <aside class="command-panel" aria-label="冲刺概览">
+          <div class="countdown">
+            <span>距离 2026 高考</span>
+            <strong id="daysLeft">--</strong>
+            <em>天</em>
+          </div>
+          <div class="target-row">
+            <label for="targetScore">目标分</label>
+            <input id="targetScore" type="number" min="60" max="150" value="125" />
+          </div>
+          <div class="progress-meter" aria-label="今日完成度">
+            <div>
+              <span>今日完成度</span>
+              <strong id="progressText">0/4</strong>
+            </div>
+            <meter id="taskMeter" min="0" max="4" value="0"></meter>
+          </div>
+          <div class="hero-image-wrap">
+            <img src="./assets/english-war-room.png" alt="高考英语冲刺桌面视觉图" />
+          </div>
+        </aside>
+      </section>
+
+      <section class="dashboard-grid" id="today" aria-label="今日学习工作台">
+        <article class="today-board">
+          <div class="section-heading">
+            <p>Daily Sprint</p>
+            <h2>今日冲刺任务</h2>
+          </div>
+          <div class="task-list" id="taskList"></div>
+        </article>
+
+        <article class="radar-panel">
+          <div class="section-heading">
+            <p>Diagnosis</p>
+            <h2>能力雷达</h2>
+          </div>
+          <div class="radar" aria-hidden="true">
+            <div class="radar-shape"></div>
+            <span style="--x: 50%; --y: 6%">阅读</span>
+            <span style="--x: 90%; --y: 35%">语法</span>
+            <span style="--x: 73%; --y: 88%">写作</span>
+            <span style="--x: 19%; --y: 82%">完形</span>
+            <span style="--x: 10%; --y: 34%">听力</span>
+          </div>
+          <p class="panel-note">本周优先级：阅读定位、读后续写动作链、语法填空非谓语。</p>
+        </article>
+
+        <article class="phase-card" id="plan">
+          <div class="section-heading">
+            <p>Roadmap</p>
+            <h2>冲刺路线</h2>
+          </div>
+          <div class="plan-switch" role="group" aria-label="计划周期">
+            <button class="pill active" type="button" data-plan="30">30 天</button>
+            <button class="pill" type="button" data-plan="60">60 天</button>
+            <button class="pill" type="button" data-plan="90">90 天</button>
+          </div>
+          <div class="timeline" id="timeline"></div>
+          <p class="phase-output" id="phaseOutput"></p>
+        </article>
+      </section>
+
+      <section class="skill-section" id="skills">
+        <div class="section-heading">
+          <p>Modules</p>
+          <h2>专项突破</h2>
+        </div>
+        <div class="module-grid" id="moduleGrid"></div>
+      </section>
+
+      <section class="practice-section" id="practice">
+        <article class="practice-card">
+          <div class="section-heading">
+            <p>Timed Drill</p>
+            <h2>限时练习台</h2>
+          </div>
+          <div class="practice-toolbar">
+            <label>
+              练习类型
+              <select id="practiceSelect"></select>
+            </label>
+            <div class="timer-box">
+              <span id="timerDisplay">10:00</span>
+              <button type="button" id="timerToggle">开始</button>
+              <button type="button" id="timerReset">重置</button>
+            </div>
+          </div>
+          <div class="practice-question" id="practiceQuestion"></div>
+        </article>
+
+        <aside class="score-card">
+          <div class="section-heading">
+            <p>Score Lift</p>
+            <h2>提分抓手</h2>
+          </div>
+          <div id="scoreTips"></div>
+        </aside>
+      </section>
+
+      <section class="report-section" id="report">
+        <article class="report-card">
+          <div class="section-heading">
+            <p>Study Report</p>
+            <h2>学习报告</h2>
+          </div>
+          <div class="report-grid" id="reportGrid"></div>
+        </article>
+
+        <article class="review-queue">
+          <div class="section-heading">
+            <p>Saved Review</p>
+            <h2>收藏回炉</h2>
+          </div>
+          <div id="reviewQueue"></div>
+        </article>
+      </section>
+
+      <section class="mock-section" id="mock">
+        <article class="mock-card">
+          <div class="section-heading">
+            <p>Mock Exam</p>
+            <h2>微型模拟卷</h2>
+          </div>
+          <div class="mock-toolbar">
+            <div>
+              <strong id="mockTitle">新高考英语微型模拟卷</strong>
+              <span id="mockProgress">0/0</span>
+            </div>
+            <div class="timer-box">
+              <span id="mockTimer">45:00</span>
+              <button type="button" id="mockStart">开始</button>
+              <button type="button" id="mockSubmit">交卷</button>
+            </div>
+          </div>
+          <div class="mock-layout">
+            <aside class="answer-sheet" id="answerSheet"></aside>
+            <div class="mock-question" id="mockQuestion"></div>
+          </div>
+        </article>
+
+        <article class="mock-report" id="mockReport">
+          <div class="section-heading">
+            <p>Exam Report</p>
+            <h2>模拟报告</h2>
+          </div>
+          <div id="mockReportBody"></div>
+        </article>
+      </section>
+
+      <section class="library-section" id="library">
+        <div class="section-heading">
+          <p>Content Library</p>
+          <h2>冲刺内容库</h2>
+        </div>
+        <div class="library-tabs" role="tablist" aria-label="内容库分类">
+          <button class="library-tab active" type="button" data-library="checklist">考前清单</button>
+          <button class="library-tab" type="button" data-library="writing">写作素材</button>
+          <button class="library-tab" type="button" data-library="grammar">语法速查</button>
+          <button class="library-tab" type="button" data-library="timeline">考试节奏</button>
+        </div>
+        <div class="library-grid" id="libraryGrid"></div>
+      </section>
+
+      <section class="split-section" id="writing">
+        <article class="writing-lab">
+          <div class="section-heading">
+            <p>Writing Lab</p>
+            <h2>写作提分实验室</h2>
+          </div>
+          <div class="tabs" role="tablist" aria-label="写作类型">
+            <button class="tab active" type="button" data-tab="practical">应用文</button>
+            <button class="tab" type="button" data-tab="continuation">读后续写</button>
+          </div>
+          <div class="writing-content" id="writingContent"></div>
+          <textarea id="writingDraft" rows="7" placeholder="在这里写 80-120 词草稿，页面会自动保存。"></textarea>
+          <div class="draft-actions">
+            <span id="draftCount">0 words</span>
+            <button type="button" id="clearDraft">清空草稿</button>
+          </div>
+        </article>
+
+        <article class="vocab-panel" id="vocab">
+          <div class="section-heading">
+            <p>Vocabulary</p>
+            <h2>高频主题词块</h2>
+          </div>
+          <input class="search-input" id="vocabSearch" type="search" placeholder="搜索词块，例如 progress / awareness" />
+          <div class="chips" id="vocabChips"></div>
+          <div class="mini-drill">
+            <strong>今日词块任务</strong>
+            <p>用 3 个词块各写一句，再把其中一句改写成读后续写动作描写。</p>
+          </div>
+        </article>
+      </section>
+
+      <section class="mistake-section" id="mistakes">
+        <div class="section-heading">
+          <p>Review Loop</p>
+          <h2>错题回炉</h2>
+        </div>
+        <div class="mistake-grid" id="mistakeGrid"></div>
+        <form class="mistake-form" id="mistakeForm">
+          <input id="mistakeTitle" required placeholder="新增错题标签，例如：阅读主旨题误判" />
+          <input id="mistakeText" required placeholder="回炉动作，例如：重读首尾段并圈出态度词" />
+          <button type="submit">加入错题本</button>
+        </form>
+      </section>
+    </main>
+
+    <footer class="footer">
+      <p>内容依据：普通高中英语课程标准与新高考全国卷常见题型结构。正式运营前应按 2026 年各地考试院最新公告校对。</p>
+    </footer>
+
+    <script src="./data/content.js"></script>
+    <script src="./app.js"></script>
+  </body>
+</html>
