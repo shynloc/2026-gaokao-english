@@ -1916,6 +1916,24 @@ function renderMockExamSelect() {
   select.value = currentMockExam()?.id || "";
 }
 
+function resetActiveMockExam() {
+  const prefix = `${state.activeMockExamId}:`;
+  Object.keys(state.mockAnswers).forEach((key) => {
+    if (key.startsWith(prefix)) {
+      delete state.mockAnswers[key];
+    }
+  });
+  delete state.mockWritingByExam[state.activeMockExamId];
+  if (state.activeMockExamId === "core") {
+    state.mockWriting = "";
+  }
+  state.mockQuestionIndex = 0;
+  saveState();
+  resetMockTimerForExam();
+  renderMockQuestion();
+  renderMockStoredReport();
+}
+
 function renderAnswerSheet() {
   const questions = mockQuestions();
   document.getElementById("answerSheet").innerHTML = questions
@@ -2663,6 +2681,10 @@ document.getElementById("mockSubmit").addEventListener("click", () => {
   mockTimerHandle = null;
   document.getElementById("mockStart").textContent = "开始";
   submitMockExam();
+});
+
+document.getElementById("mockResetExam").addEventListener("click", () => {
+  resetActiveMockExam();
 });
 
 document.getElementById("mockExamSelect").addEventListener("change", (event) => {
