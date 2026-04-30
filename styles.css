@@ -1157,6 +1157,180 @@ select {
   gap: 14px;
 }
 
+.prescription-section {
+  display: grid;
+  grid-template-columns: minmax(0, 1.7fr) minmax(280px, 0.8fr);
+  gap: 18px;
+}
+
+.prescription-card,
+.prescription-summary {
+  padding: 22px;
+  border: 1px solid var(--line);
+  background: var(--paper);
+  box-shadow: var(--shadow);
+}
+
+.prescription-layout {
+  display: grid;
+  grid-template-columns: 260px minmax(0, 1fr);
+  gap: 16px;
+  margin-top: 18px;
+}
+
+.pack-tabs {
+  display: grid;
+  gap: 10px;
+  align-content: start;
+}
+
+.pack-tabs button {
+  min-height: 76px;
+  padding: 14px;
+  border: 1px solid var(--line);
+  background: var(--bg);
+  color: var(--ink);
+  text-align: left;
+  cursor: pointer;
+}
+
+.pack-tabs button.active {
+  background: var(--ink);
+  color: var(--paper);
+  border-color: var(--ink);
+}
+
+.pack-tabs span,
+.pack-head span,
+.output-card span {
+  display: block;
+  color: var(--orange);
+  font-size: 12px;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+.pack-tabs button.active span {
+  color: var(--green);
+}
+
+.pack-tabs strong {
+  display: block;
+  margin-top: 6px;
+  line-height: 1.35;
+}
+
+.pack-detail {
+  min-width: 0;
+  padding: 18px;
+  border: 1px solid var(--line);
+  background: var(--bg);
+}
+
+.pack-head h3 {
+  margin: 10px 0;
+  font-size: 28px;
+}
+
+.pack-head p,
+.prescription-summary li,
+.prescription-summary .panel-note {
+  color: var(--muted);
+  line-height: 1.7;
+}
+
+.pack-meter {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: center;
+  gap: 12px;
+  margin: 18px 0;
+  padding: 12px;
+  border: 1px solid var(--line);
+  background: var(--paper);
+}
+
+.pack-meter strong {
+  color: var(--green);
+  font-size: 22px;
+}
+
+.pack-meter span {
+  color: var(--muted);
+  font-size: 13px;
+  font-weight: 800;
+}
+
+.pack-task-list {
+  display: grid;
+  gap: 10px;
+}
+
+.pack-task {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  align-items: start;
+  gap: 10px;
+  padding: 12px;
+  border: 1px solid var(--line);
+  background: var(--paper);
+}
+
+.pack-task input {
+  width: 18px;
+  height: 18px;
+  margin-top: 2px;
+  accent-color: var(--green);
+}
+
+.pack-task small {
+  display: block;
+  margin-top: 5px;
+  color: var(--muted);
+  line-height: 1.6;
+}
+
+.pack-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 16px;
+}
+
+.pack-actions button {
+  min-height: 40px;
+  border: 1px solid var(--ink);
+  background: var(--ink);
+  color: var(--paper);
+  padding: 9px 12px;
+  cursor: pointer;
+  font-weight: 900;
+}
+
+.pack-actions button:last-child {
+  background: transparent;
+  color: var(--ink);
+}
+
+.prescription-summary ul {
+  display: grid;
+  gap: 10px;
+  margin: 18px 0;
+  padding-left: 18px;
+}
+
+.output-card {
+  padding: 16px;
+  border: 1px solid var(--line);
+  background: var(--bg);
+}
+
+.output-card strong {
+  display: block;
+  margin-top: 8px;
+  line-height: 1.6;
+}
+
 .library-card {
   min-height: 250px;
   padding: 18px;
@@ -1481,6 +1655,7 @@ textarea {
   .dashboard-grid,
   .practice-section,
   .report-section,
+  .prescription-section,
   .mock-section,
   .split-section {
     grid-template-columns: 1fr;
@@ -1499,6 +1674,14 @@ textarea {
 
   .calendar-grid {
     grid-template-columns: repeat(7, minmax(220px, 1fr));
+  }
+
+  .prescription-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .pack-tabs {
+    grid-template-columns: repeat(2, 1fr);
   }
 }
 
@@ -1564,6 +1747,11 @@ textarea {
   }
 
   .report-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .pack-tabs,
+  .pack-meter {
     grid-template-columns: 1fr;
   }
 

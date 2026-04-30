@@ -18,6 +18,8 @@ state.mockAttempts = state.mockAttempts || [];
 state.writingPromptId = state.writingPromptId || "";
 state.writingChecks = state.writingChecks || {};
 state.draftHistory = state.draftHistory || [];
+state.activePackId = state.activePackId || "";
+state.packDone = state.packDone || {};
 
 const externalContent = window.E26_CONTENT || {};
 
@@ -723,6 +725,73 @@ const libraryContent = {
   ],
 };
 
+const prescriptionPacks = externalContent.prescriptionPacks || [
+  {
+    id: "listening-turn",
+    tag: "Listening",
+    title: "听力转折与数字",
+    minutes: 24,
+    practiceType: "listening",
+    goal: "把 but, however, actually, not really 后面的变化信息听准，减少数字换算和态度误判。",
+    tasks: [
+      { id: "scene", title: "听前预测场景", detail: "先看题干中的地点、人物关系、时间数字，写下可能出现的同义表达。" },
+      { id: "signal", title: "抓转折信号", detail: "每听到转折、否定、比较、价格或时间变化，就在草稿纸上打一个小标记。" },
+      { id: "convert", title: "复核数字变化", detail: "对 half price, ten minutes later, another two dollars 这类信息做二次换算。" },
+      { id: "review", title: "复述错因", detail: "错题只写一句话：我漏听了哪个信号词，选项如何偷换了信息。" },
+    ],
+    evidence: ["转折后信息常是答案落点", "数字题容易考变化而非原始数字", "态度题优先听语气和评价词"],
+    output: "产出：3 条听力错因标签 + 1 组信号词清单",
+  },
+  {
+    id: "reading-evidence",
+    tag: "Reading",
+    title: "阅读定位与选项改写",
+    minutes: 28,
+    practiceType: "reading",
+    goal: "把“看懂原文但选错”拆成定位、比对、排除三个动作，训练证据意识。",
+    tasks: [
+      { id: "locate", title: "定位证据句", detail: "每题必须圈出原文证据句，主旨题至少圈出首尾段和反复词。" },
+      { id: "rewrite", title: "标同义改写", detail: "把正确选项和原文对应词写在同一行，特别关注动词和范围词。" },
+      { id: "trap", title: "拆干扰项", detail: "给错误选项贴标签：无中生有、范围扩大、因果倒置、情感过度。" },
+      { id: "retell", title: "30 秒复述", detail: "合上原文，用一句英文复述段落中心，检验是否真的抓住主线。" },
+    ],
+    evidence: ["细节题答案必须回到证据句", "正确选项多是同义改写", "错误选项常多一层推断或少一个限定"],
+    output: "产出：一张阅读证据表 + 2 个干扰项标签",
+  },
+  {
+    id: "grammar-verb",
+    tag: "Grammar",
+    title: "语法动词空急救",
+    minutes: 20,
+    practiceType: "grammar",
+    goal: "先数谓语，再判关系，最后看时态语态，避免动词空凭感觉填。",
+    tasks: [
+      { id: "predicate", title: "先数谓语", detail: "找出句子主干，看已有几个谓语动词，判断空格是否可能是非谓语。" },
+      { id: "relation", title: "判主被动", detail: "看空格逻辑主语和动词之间是主动、被动还是目的关系。" },
+      { id: "clause", title: "看连接词", detail: "如果有从句连接词，先判断从句缺不缺成分，再决定关系词或连词。" },
+      { id: "wrong", title: "改写错句", detail: "把错题改成一个新句子，保留同一语法点但换掉主题词。" },
+    ],
+    evidence: ["动词空不是先看中文意思", "一个简单句通常只能有一个谓语核心", "非谓语先看逻辑关系"],
+    output: "产出：5 个动词空判断理由",
+  },
+  {
+    id: "writing-action",
+    tag: "Writing",
+    title: "续写动作链补强",
+    minutes: 26,
+    practiceType: "continuation",
+    goal: "用动作推动情节，用细节承接原文，避免续写变成情绪口号或剧情跳跃。",
+    tasks: [
+      { id: "conflict", title: "写清冲突", detail: "用一句话说明人物此刻想要什么、被什么阻碍。" },
+      { id: "action", title: "列三步动作", detail: "写出看见、停顿、尝试、失败、发现、回应等连续动作。" },
+      { id: "emotion", title: "情绪不直说", detail: "把 happy, nervous, moved 改成动作、表情或身体反应。" },
+      { id: "echo", title: "回扣原文细节", detail: "结尾必须回收原文的一个物件、承诺、比赛目标或人物关系。" },
+    ],
+    evidence: ["续写评分看情节合理和语言协同", "每段至少有一个可视化动作", "结尾升华要从故事里长出来"],
+    output: "产出：一条 6 句动作链 + 1 个自然结尾",
+  },
+];
+
 function updateProgress() {
   const completed = tasks.filter((task) => state.tasks[task.id]).length;
   document.getElementById("progressText").textContent = `${completed}/${tasks.length}`;
@@ -854,6 +923,113 @@ function renderCalendar() {
       saveState();
       renderCalendar();
     });
+  });
+}
+
+function activePrescriptionPack() {
+  if (!state.activePackId && prescriptionPacks.length) {
+    state.activePackId = prescriptionPacks[0].id;
+  }
+  return prescriptionPacks.find((pack) => pack.id === state.activePackId) || prescriptionPacks[0];
+}
+
+function packCompletion(pack) {
+  const done = state.packDone[pack.id] || {};
+  const count = pack.tasks.filter((task) => done[task.id]).length;
+  const percent = pack.tasks.length ? Math.round((count / pack.tasks.length) * 100) : 0;
+  return { count, total: pack.tasks.length, percent };
+}
+
+function renderPrescription() {
+  const pack = activePrescriptionPack();
+  if (!pack) {
+    return;
+  }
+  const completion = packCompletion(pack);
+
+  document.getElementById("packTabs").innerHTML = prescriptionPacks
+    .map(
+      (item) => `
+        <button class="${item.id === pack.id ? "active" : ""}" type="button" data-pack-id="${item.id}">
+          <span>${item.tag}</span>
+          <strong>${item.title}</strong>
+        </button>
+      `
+    )
+    .join("");
+
+  document.getElementById("packDetail").innerHTML = `
+    <div class="pack-head">
+      <span>${pack.tag} · ${pack.minutes} min</span>
+      <h3>${pack.title}</h3>
+      <p>${pack.goal}</p>
+    </div>
+    <div class="pack-meter">
+      <strong>${completion.percent}%</strong>
+      <meter min="0" max="100" value="${completion.percent}"></meter>
+      <span>${completion.count}/${completion.total} steps</span>
+    </div>
+    <div class="pack-task-list">
+      ${pack.tasks
+        .map(
+          (task) => `
+            <label class="pack-task">
+              <input type="checkbox" data-pack-task="${task.id}" ${(state.packDone[pack.id] || {})[task.id] ? "checked" : ""} />
+              <span>
+                <strong>${task.title}</strong>
+                <small>${task.detail}</small>
+              </span>
+            </label>
+          `
+        )
+        .join("")}
+    </div>
+    <div class="pack-actions">
+      <button type="button" data-pack-practice="${pack.practiceType}">进入对应专项练习</button>
+      <button type="button" id="resetPack">重置本处方</button>
+    </div>
+  `;
+
+  document.getElementById("prescriptionSummary").innerHTML = `
+    <div class="section-heading">
+      <p>Evidence</p>
+      <h2>为什么这样练</h2>
+    </div>
+    <ul>${pack.evidence.map((item) => `<li>${item}</li>`).join("")}</ul>
+    <div class="output-card">
+      <span>Today's Output</span>
+      <strong>${pack.output}</strong>
+    </div>
+    <p class="panel-note">做完处方后，把仍然卡住的一步写进错题回炉，下一轮只补这一个动作。</p>
+  `;
+
+  document.querySelectorAll("[data-pack-id]").forEach((button) => {
+    button.addEventListener("click", () => {
+      state.activePackId = button.dataset.packId;
+      saveState();
+      renderPrescription();
+    });
+  });
+
+  document.querySelectorAll("[data-pack-task]").forEach((input) => {
+    input.addEventListener("change", () => {
+      state.packDone[pack.id] = state.packDone[pack.id] || {};
+      state.packDone[pack.id][input.dataset.packTask] = input.checked;
+      saveState();
+      renderPrescription();
+    });
+  });
+
+  document.querySelector("[data-pack-practice]").addEventListener("click", (event) => {
+    document.getElementById("practiceSelect").value = event.currentTarget.dataset.packPractice;
+    renderPractice(event.currentTarget.dataset.packPractice);
+    document.getElementById("practice").scrollIntoView({ behavior: "smooth", block: "start" });
+  });
+
+  document.getElementById("resetPack").addEventListener("click", () => {
+    state.packDone[pack.id] = {};
+    saveState();
+    renderPrescription();
   });
 }
 
@@ -1623,6 +1799,7 @@ renderTasks();
 renderPlan();
 renderModules();
 renderCalendar();
+renderPrescription();
 renderLibrary();
 renderWriting("practical");
 initWritingLab();
