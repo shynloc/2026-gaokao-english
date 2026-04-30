@@ -1477,6 +1477,53 @@ select {
   display: block;
 }
 
+.answer-box strong {
+  display: block;
+  margin-bottom: 6px;
+  color: var(--ink);
+}
+
+.answer-box p {
+  margin: 0;
+}
+
+.practice-insight {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+  margin-top: 12px;
+}
+
+.practice-insight div {
+  min-width: 0;
+  padding: 10px;
+  border: 1px solid var(--line);
+  background: color-mix(in srgb, var(--paper) 75%, transparent);
+}
+
+.practice-insight span {
+  display: block;
+  margin-bottom: 4px;
+  color: var(--orange);
+  font-size: 12px;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+.practice-error-tags {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+}
+
+.practice-error-tags b {
+  padding: 4px 8px;
+  border: 1px solid var(--green);
+  color: var(--ink);
+  font-size: 12px;
+}
+
 .practice-actions {
   display: flex;
   flex-wrap: wrap;
@@ -2270,6 +2317,10 @@ textarea {
   }
 
   .mock-trend-panel {
+    grid-template-columns: 1fr;
+  }
+
+  .practice-insight {
     grid-template-columns: 1fr;
   }
 }

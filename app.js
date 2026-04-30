@@ -1375,7 +1375,7 @@ function renderPrescription() {
 
   document.getElementById("resetPack").addEventListener("click", () => {
     state.packDone[pack.id] = {};
-    saveState();
+  saveState();
     renderPrescription();
   });
 }
@@ -2046,7 +2046,7 @@ function renderMockQuestion() {
   document.getElementById("mockNext").disabled = state.mockQuestionIndex === questions.length - 1;
   document.getElementById("mockPrev").addEventListener("click", () => {
     state.mockQuestionIndex = Math.max(0, state.mockQuestionIndex - 1);
-    saveState();
+  saveState();
     renderMockQuestion();
   });
   document.getElementById("mockNext").addEventListener("click", () => {
@@ -2326,6 +2326,46 @@ function reviewTags(review) {
   return review.tags?.length ? review.tags : defaultTagsForType(review.type);
 }
 
+function practiceInsightItems(item) {
+  return [
+    item.evidence ? { label: "定位句", text: item.evidence } : null,
+    item.trap ? { label: "干扰项", text: item.trap } : null,
+    item.method ? { label: "解题动作", text: item.method } : null,
+  ].filter(Boolean);
+}
+
+function renderPracticeInsight(item) {
+  const insightItems = practiceInsightItems(item);
+  const tags = item.errorTags?.map((tagId) => tagById(tagId)?.label).filter(Boolean) || [];
+  if (!insightItems.length && !tags.length) {
+    return "";
+  }
+  return `
+    <div class="practice-insight">
+      ${insightItems
+        .map(
+          (insight) => `
+            <div>
+              <span>${insight.label}</span>
+              <p>${insight.text}</p>
+            </div>
+          `
+        )
+        .join("")}
+      ${
+        tags.length
+          ? `<div class="practice-error-tags"><span>错因标签</span>${tags.map((tag) => `<b>${tag}</b>`).join("")}</div>`
+          : ""
+      }
+    </div>
+  `;
+}
+
+function practiceReviewText(item) {
+  const details = practiceInsightItems(item).map((insight) => `${insight.label}：${insight.text}`);
+  return [item.explain, ...details].join(" ");
+}
+
 function errorTagStats() {
   const counts = {};
   state.savedReviews.forEach((review) => {
@@ -2349,13 +2389,15 @@ function saveForReview(type, item) {
       key,
       type,
       title: item.title,
-      text: item.explain,
-      tags: defaultTagsForType(type),
+      text: practiceReviewText(item),
+      tags: item.errorTags?.length ? item.errorTags : defaultTagsForType(type),
     });
   } else if (!current.tags?.length) {
-    current.tags = defaultTagsForType(type);
+    current.tags = item.errorTags?.length ? item.errorTags : defaultTagsForType(type);
+  } else if (current.text === item.explain) {
+    current.text = practiceReviewText(item);
   }
-    saveState();
+  saveState();
   renderReviewQueue();
   renderReport();
 }
@@ -2401,7 +2443,11 @@ function renderPractice(type) {
       });
       button.classList.add(isCorrect ? "correct" : "wrong");
       document.getElementById("answerBox").classList.add("show");
-      document.getElementById("answerBox").textContent = `${isCorrect ? "答对了。" : "这题先回炉。"}${item.explain}`;
+      document.getElementById("answerBox").innerHTML = `
+        <strong>${isCorrect ? "答对了。" : "这题先回炉。"}</strong>
+        <p>${item.explain}</p>
+        ${renderPracticeInsight(item)}
+      `;
       recordAnswer(type, isCorrect);
       if (!isCorrect) {
         saveForReview(type, item);
