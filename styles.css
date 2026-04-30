@@ -213,6 +213,8 @@ h1 {
 .phase-card,
 .practice-card,
 .score-card,
+.score-blueprint,
+.score-rules,
 .report-card,
 .review-queue,
 .mock-card,
@@ -527,6 +529,154 @@ meter {
   gap: 12px;
   overflow-x: auto;
   padding-bottom: 6px;
+}
+
+.score-section {
+  display: grid;
+  grid-template-columns: minmax(0, 1.45fr) minmax(300px, 0.85fr);
+  gap: 18px;
+}
+
+.score-blueprint,
+.score-rules {
+  padding: 22px;
+}
+
+.score-blueprint-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+  margin-top: 18px;
+}
+
+.score-slice {
+  display: grid;
+  gap: 12px;
+  min-height: 250px;
+  padding: 18px;
+  border: 1px solid var(--line);
+  background: var(--bg);
+}
+
+.score-slice > div:first-child {
+  display: flex;
+  align-items: start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.score-slice span,
+.score-summary-card span,
+.score-action-head span {
+  color: var(--orange);
+  font-size: 12px;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+.score-slice strong {
+  color: var(--ink);
+  font-size: 36px;
+  line-height: 0.95;
+  text-align: right;
+}
+
+.score-slice strong small {
+  color: var(--muted);
+  font-size: 15px;
+}
+
+.score-slice p,
+.score-summary-card p,
+.score-summary-card small,
+.score-action small {
+  color: var(--muted);
+  line-height: 1.65;
+}
+
+.loss-line {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-top: auto;
+}
+
+.loss-line span {
+  color: var(--green);
+}
+
+.loss-line button {
+  min-height: 38px;
+  border: 1px solid var(--ink);
+  background: var(--paper);
+  color: var(--ink);
+  padding: 8px 12px;
+  cursor: pointer;
+  font-weight: 900;
+}
+
+.loss-line button:hover {
+  background: var(--ink);
+  color: var(--paper);
+}
+
+.score-summary-card {
+  padding: 18px;
+  border: 1px solid var(--line);
+  background: var(--ink);
+  color: var(--paper);
+}
+
+.score-summary-card strong {
+  display: block;
+  margin: 8px 0;
+  color: var(--yellow);
+  font-size: 28px;
+}
+
+.score-summary-card p,
+.score-summary-card small {
+  color: color-mix(in srgb, var(--paper) 76%, transparent);
+}
+
+.score-action-list {
+  display: grid;
+  gap: 10px;
+  margin-top: 14px;
+}
+
+.score-action-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 0 4px;
+}
+
+.score-action-head strong {
+  color: var(--green);
+}
+
+.score-action {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  align-items: start;
+  gap: 10px;
+  padding: 12px;
+  border: 1px solid var(--line);
+  background: var(--bg);
+}
+
+.score-action input {
+  width: 18px;
+  height: 18px;
+  margin-top: 2px;
+  accent-color: var(--green);
+}
+
+.score-action strong,
+.score-action small {
+  display: block;
 }
 
 .calendar-day {
@@ -1653,6 +1803,7 @@ textarea {
 
   .hero-section,
   .dashboard-grid,
+  .score-section,
   .practice-section,
   .report-section,
   .prescription-section,
@@ -1668,7 +1819,8 @@ textarea {
   .timeline,
   .module-grid,
   .mistake-grid,
-  .library-grid {
+  .library-grid,
+  .score-blueprint-grid {
     grid-template-columns: repeat(2, 1fr);
   }
 
@@ -1710,7 +1862,8 @@ textarea {
   .timeline,
   .module-grid,
   .mistake-grid,
-  .library-grid {
+  .library-grid,
+  .score-blueprint-grid {
     grid-template-columns: 1fr;
   }
 
@@ -1720,6 +1873,11 @@ textarea {
 
   .task time {
     grid-column: 2;
+  }
+
+  .loss-line {
+    align-items: stretch;
+    flex-direction: column;
   }
 
   .practice-toolbar,

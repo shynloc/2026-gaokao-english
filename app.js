@@ -20,6 +20,7 @@ state.writingChecks = state.writingChecks || {};
 state.draftHistory = state.draftHistory || [];
 state.activePackId = state.activePackId || "";
 state.packDone = state.packDone || {};
+state.scoreDone = state.scoreDone || {};
 
 const externalContent = window.E26_CONTENT || {};
 
@@ -792,6 +793,44 @@ const prescriptionPacks = externalContent.prescriptionPacks || [
   },
 ];
 
+const scoreSections = [
+  {
+    id: "listening",
+    title: "听力",
+    max: 30,
+    practiceType: "listening",
+    focus: "先保场景、数字、转折和态度题，听不清时不要用常识补答案。",
+  },
+  {
+    id: "reading",
+    title: "阅读与七选五",
+    max: 50,
+    practiceType: "reading",
+    focus: "把细节定位和选项比对做稳，主旨题看结构而不是只凭某一句话。",
+  },
+  {
+    id: "language",
+    title: "语言运用",
+    max: 30,
+    practiceType: "grammar",
+    focus: "完形看情绪和复现，语法填空先数谓语再判断非谓语或词性转换。",
+  },
+  {
+    id: "writing",
+    title: "写作",
+    max: 40,
+    practiceType: "continuation",
+    focus: "应用文保任务完整，续写保情节合理、动作推进和结尾自然回扣。",
+  },
+];
+
+const scoreActions = [
+  { id: "budget", title: "写下本周失分预算", detail: "只允许 1-2 个主攻题型大幅波动，其余题型按保守目标执行。" },
+  { id: "evidence", title: "每道错题保留证据", detail: "阅读写定位句，语法写判断理由，写作写遗漏要点，听力写漏听信号。" },
+  { id: "timing", title: "固定时间上限", detail: "阅读卡题先标记，作文至少预留 35 分钟，不把后半卷交给运气。" },
+  { id: "output", title: "每天留一个可见产出", detail: "可以是一张证据表、5 个动词空理由、1 段续写动作链或 1 篇应用文草稿。" },
+];
+
 function updateProgress() {
   const completed = tasks.filter((task) => state.tasks[task.id]).length;
   document.getElementById("progressText").textContent = `${completed}/${tasks.length}`;
@@ -1030,6 +1069,141 @@ function renderPrescription() {
     state.packDone[pack.id] = {};
     saveState();
     renderPrescription();
+  });
+}
+
+function scoreBlueprint() {
+  const target = Math.max(60, Math.min(150, Number(state.targetScore) || 125));
+  const ratio = target / 150;
+  const sections = scoreSections.map((section) => ({
+    ...section,
+    goal: Math.max(0, Math.min(section.max, Math.round(section.max * ratio))),
+  }));
+  let diff = target - sections.reduce((sum, section) => sum + section.goal, 0);
+  const priority = ["reading", "writing", "listening", "language"];
+
+  while (diff !== 0) {
+    let changed = false;
+    for (const id of priority) {
+      const section = sections.find((item) => item.id === id);
+      if (diff > 0 && section.goal < section.max) {
+        section.goal += 1;
+        diff -= 1;
+        changed = true;
+      } else if (diff < 0 && section.goal > 0) {
+        section.goal -= 1;
+        diff += 1;
+        changed = true;
+      }
+      if (diff === 0) {
+        break;
+      }
+    }
+    if (!changed) {
+      break;
+    }
+  }
+
+  return sections.map((section) => ({
+    ...section,
+    loss: section.max - section.goal,
+    percent: Math.round((section.goal / section.max) * 100),
+  }));
+}
+
+function scoreBand(target) {
+  if (target >= 135) {
+    return {
+      name: "高分冲刺",
+      line: "每个板块都要可控，阅读和写作不能靠临场发挥。",
+    };
+  }
+  if (target >= 120) {
+    return {
+      name: "稳中提分",
+      line: "先把阅读证据、语法判断和写作任务完整度稳定下来。",
+    };
+  }
+  if (target >= 105) {
+    return {
+      name: "保稳补基",
+      line: "优先拿稳基础题和应用文，不在难题上过度消耗时间。",
+    };
+  }
+  return {
+    name: "基础回收",
+    line: "把词汇识别、语法主干和阅读细节题作为第一得分来源。",
+  };
+}
+
+function renderScoreBlueprint() {
+  const target = Math.max(60, Math.min(150, Number(state.targetScore) || 125));
+  const sections = scoreBlueprint();
+  const band = scoreBand(target);
+  const completed = scoreActions.filter((item) => state.scoreDone[item.id]).length;
+
+  document.getElementById("scoreBlueprintCards").innerHTML = sections
+    .map(
+      (section) => `
+        <article class="score-slice">
+          <div>
+            <span>${section.title}</span>
+            <strong>${section.goal}<small>/${section.max}</small></strong>
+          </div>
+          <meter min="0" max="100" value="${section.percent}"></meter>
+          <p>${section.focus}</p>
+          <div class="loss-line">
+            <span>可丢 ${section.loss} 分</span>
+            <button type="button" data-score-practice="${section.practiceType}">练这一项</button>
+          </div>
+        </article>
+      `
+    )
+    .join("");
+
+  document.getElementById("scoreBlueprintSummary").innerHTML = `
+    <div class="score-summary-card">
+      <span>目标 ${target} / 150</span>
+      <strong>${band.name}</strong>
+      <p>${band.line}</p>
+      <small>通用训练口径：听力 30、阅读与七选五 50、语言运用 30、写作 40。正式备考时按本省最新卷面结构微调。</small>
+    </div>
+  `;
+
+  document.getElementById("scoreActionList").innerHTML = `
+    <div class="score-action-head">
+      <span>本周保分动作</span>
+      <strong>${completed}/${scoreActions.length}</strong>
+    </div>
+    ${scoreActions
+      .map(
+        (item) => `
+          <label class="score-action">
+            <input type="checkbox" data-score-action="${item.id}" ${state.scoreDone[item.id] ? "checked" : ""} />
+            <span>
+              <strong>${item.title}</strong>
+              <small>${item.detail}</small>
+            </span>
+          </label>
+        `
+      )
+      .join("")}
+  `;
+
+  document.querySelectorAll("[data-score-practice]").forEach((button) => {
+    button.addEventListener("click", () => {
+      document.getElementById("practiceSelect").value = button.dataset.scorePractice;
+      renderPractice(button.dataset.scorePractice);
+      document.getElementById("practice").scrollIntoView({ behavior: "smooth", block: "start" });
+    });
+  });
+
+  document.querySelectorAll("[data-score-action]").forEach((input) => {
+    input.addEventListener("change", () => {
+      state.scoreDone[input.dataset.scoreAction] = input.checked;
+      saveState();
+      renderScoreBlueprint();
+    });
   });
 }
 
@@ -1651,6 +1825,7 @@ document.getElementById("targetScore").addEventListener("input", (event) => {
   state.targetScore = event.target.value;
   saveState();
   renderScoreTips();
+  renderScoreBlueprint();
 });
 
 document.querySelectorAll("[data-plan]").forEach((button) => {
@@ -1800,6 +1975,7 @@ renderPlan();
 renderModules();
 renderCalendar();
 renderPrescription();
+renderScoreBlueprint();
 renderLibrary();
 renderWriting("practical");
 initWritingLab();
