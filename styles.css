@@ -1181,6 +1181,103 @@ meter {
   margin-bottom: 14px;
 }
 
+.mock-trend-panel {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 12px;
+  margin-bottom: 14px;
+}
+
+.trend-summary,
+.trend-actions,
+.trend-bars {
+  padding: 14px;
+  border: 1px solid var(--line);
+  background: var(--bg);
+}
+
+.trend-summary span {
+  color: var(--orange);
+  font-size: 12px;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+.trend-summary strong {
+  display: block;
+  margin: 8px 0;
+  color: var(--green);
+  font-size: 34px;
+  line-height: 1;
+}
+
+.trend-summary p,
+.trend-actions p {
+  margin: 0;
+  color: var(--muted);
+  line-height: 1.65;
+}
+
+.trend-bars {
+  display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: minmax(48px, 1fr);
+  align-items: end;
+  gap: 10px;
+  min-height: 170px;
+}
+
+.trend-bar {
+  display: grid;
+  grid-template-rows: auto 1fr auto;
+  align-items: end;
+  gap: 6px;
+  min-width: 0;
+  height: 140px;
+}
+
+.trend-bar span,
+.trend-bar small {
+  overflow: hidden;
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 900;
+  text-align: center;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.trend-bar i {
+  display: block;
+  align-self: end;
+  min-height: 8px;
+  height: var(--h);
+  border: 1px solid var(--ink);
+  background: var(--green);
+  box-shadow: 3px 3px 0 var(--ink);
+}
+
+.trend-actions {
+  display: grid;
+  align-content: start;
+  gap: 10px;
+}
+
+.trend-actions button {
+  min-height: 38px;
+  border: 1px solid var(--ink);
+  background: var(--paper);
+  color: var(--ink);
+  padding: 8px 10px;
+  cursor: pointer;
+  font-weight: 900;
+}
+
+.trend-actions button:first-of-type {
+  background: var(--ink);
+  color: var(--paper);
+}
+
 .history-grid {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
@@ -2171,6 +2268,10 @@ textarea {
   .pack-tabs {
     grid-template-columns: repeat(2, 1fr);
   }
+
+  .mock-trend-panel {
+    grid-template-columns: 1fr;
+  }
 }
 
 @media (max-width: 640px) {
@@ -2261,6 +2362,10 @@ textarea {
 
   .history-grid {
     grid-template-columns: 1fr;
+  }
+
+  .trend-bars {
+    overflow-x: auto;
   }
 
   .draft-list {

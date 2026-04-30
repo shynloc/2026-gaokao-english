@@ -1854,6 +1854,24 @@ function practiceTypeForSection(sectionId) {
   return map[sectionId] || sectionId;
 }
 
+function practiceTypeFromSectionTitle(title = "") {
+  if (title.includes("七选五")) return "seven";
+  if (title.includes("完形")) return "cloze";
+  if (title.includes("语法") || title.includes("语言")) return "grammar";
+  if (title.includes("应用文")) return "practical";
+  if (title.includes("续写")) return "continuation";
+  if (title.includes("词块") || title.includes("词汇")) return "vocab";
+  if (title.includes("听力")) return "listening";
+  return "reading";
+}
+
+function packIdForPracticeType(type) {
+  if (type === "listening") return "listening-turn";
+  if (type === "reading" || type === "seven") return "reading-evidence";
+  if (type === "grammar" || type === "cloze") return "grammar-verb";
+  return "writing-action";
+}
+
 function mockQuestions() {
   const exam = currentMockExam();
   if (!exam) {
@@ -2039,7 +2057,7 @@ function submitMockExam() {
   const rawScore = correct.reduce((sum, question) => sum + question.score, 0);
   const totalChoiceScore = choiceQuestions.reduce((sum, question) => sum + question.score, 0);
   const sectionStats = choiceQuestions.reduce((acc, question) => {
-    acc[question.sectionTitle] = acc[question.sectionTitle] || { total: 0, correct: 0 };
+    acc[question.sectionTitle] = acc[question.sectionTitle] || { total: 0, correct: 0, type: question.practiceType };
     acc[question.sectionTitle].total += 1;
     if (state.mockAnswers[question.id] === question.answer) {
       acc[question.sectionTitle].correct += 1;
@@ -2047,7 +2065,7 @@ function submitMockExam() {
     return acc;
   }, {});
   const weakestSection = Object.entries(sectionStats)
-    .map(([title, item]) => ({ title, rate: item.total ? item.correct / item.total : 1 }))
+    .map(([title, item]) => ({ title, type: item.type, rate: item.total ? item.correct / item.total : 1 }))
     .sort((a, b) => a.rate - b.rate)[0];
   const attempt = {
     date: new Date().toLocaleString("zh-CN", { month: "2-digit", day: "2-digit", hour: "2-digit", minute: "2-digit" }),
@@ -2058,6 +2076,7 @@ function submitMockExam() {
     accuracy: choiceQuestions.length ? Math.round((correct.length / choiceQuestions.length) * 100) : 0,
     writingWords,
     weakest: weakestSection?.title || "暂无",
+    weakestType: weakestSection?.type || "reading",
   };
   const addedReviews = saveMockWrongAnswers(choiceQuestions);
   state.mockAttempts = [attempt, ...state.mockAttempts].slice(0, 6);
@@ -2104,6 +2123,7 @@ function submitMockExam() {
     ${renderMockHistory()}
   `;
 
+  bindMockReportActions();
   renderReviewQueue();
   renderReport();
   document.getElementById("mockReport").scrollIntoView({ behavior: "smooth", block: "start" });
@@ -2114,10 +2134,11 @@ function renderMockHistory() {
     return "";
   }
 
-  const best = state.mockAttempts.reduce((max, item) => Math.max(max, item.score), 0);
+  const best = state.mockAttempts.reduce((max, item) => Math.max(max, item.accuracy || 0), 0);
   return `
     <div class="mock-history">
       <h3>最近模拟记录</h3>
+      ${renderMockTrend()}
       <div class="history-grid">
         ${state.mockAttempts
           .map(
@@ -2133,9 +2154,70 @@ function renderMockHistory() {
           )
           .join("")}
       </div>
-      <p class="history-note">最高选择题得分 ${best} 分。下一轮建议优先回炉最近一次的薄弱项。</p>
+      <p class="history-note">最高选择题正确率 ${best}%。下一轮建议优先回炉最近一次的薄弱项。</p>
     </div>
   `;
+}
+
+function renderMockTrend() {
+  const recent = [...state.mockAttempts].slice(0, 6).reverse();
+  const latest = state.mockAttempts[0];
+  const previous = state.mockAttempts[1];
+  const latestType = latest?.weakestType || practiceTypeFromSectionTitle(latest?.weakest);
+  const delta = previous ? (latest.accuracy || 0) - (previous.accuracy || 0) : 0;
+  const weakCounts = state.mockAttempts.reduce((acc, item) => {
+    const type = item.weakestType || practiceTypeFromSectionTitle(item.weakest);
+    acc[type] = (acc[type] || 0) + 1;
+    return acc;
+  }, {});
+  const repeatedWeak = Object.entries(weakCounts).sort((a, b) => b[1] - a[1])[0];
+
+  return `
+    <div class="mock-trend-panel">
+      <div class="trend-summary">
+        <span>Trend</span>
+        <strong>${delta === 0 ? "持平" : delta > 0 ? `+${delta}%` : `${delta}%`}</strong>
+        <p>${previous ? "相对上一套模拟卷的选择题正确率变化。" : "完成第二套模拟后会显示趋势变化。"}</p>
+      </div>
+      <div class="trend-bars" aria-label="最近模拟正确率趋势">
+        ${recent
+          .map(
+            (item) => `
+              <div class="trend-bar" style="--h:${Math.max(6, item.accuracy || 0)}%">
+                <span>${item.accuracy || 0}%</span>
+                <i></i>
+                <small>${item.examTitle || "模拟卷"}</small>
+              </div>
+            `
+          )
+          .join("")}
+      </div>
+      <div class="trend-actions">
+        <p>反复薄弱：${moduleTitle(repeatedWeak?.[0] || latestType)} · 最近薄弱：${moduleTitle(latestType)}</p>
+        <button type="button" data-mock-trend-practice="${latestType}">回练最近薄弱项</button>
+        <button type="button" data-mock-trend-pack="${packIdForPracticeType(latestType)}">打开对应处方</button>
+      </div>
+    </div>
+  `;
+}
+
+function bindMockReportActions() {
+  document.querySelectorAll("[data-mock-trend-practice]").forEach((button) => {
+    button.addEventListener("click", () => {
+      document.getElementById("practiceSelect").value = button.dataset.mockTrendPractice;
+      renderPractice(button.dataset.mockTrendPractice);
+      document.getElementById("practice").scrollIntoView({ behavior: "smooth", block: "start" });
+    });
+  });
+
+  document.querySelectorAll("[data-mock-trend-pack]").forEach((button) => {
+    button.addEventListener("click", () => {
+      state.activePackId = button.dataset.mockTrendPack;
+      saveState();
+      renderPrescription();
+      document.getElementById("prescription").scrollIntoView({ behavior: "smooth", block: "start" });
+    });
+  });
 }
 
 function getPracticeItem(type) {
