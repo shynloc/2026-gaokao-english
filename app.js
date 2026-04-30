@@ -2159,6 +2159,40 @@ function renderMockHistory() {
   `;
 }
 
+function renderMockStoredReport() {
+  const body = document.getElementById("mockReportBody");
+  if (!state.mockAttempts.length) {
+    body.innerHTML = `<p class="empty-state">还没有模拟记录。完成一套微型卷后，这里会显示趋势、薄弱项和回练入口。</p>`;
+    return;
+  }
+
+  const latest = state.mockAttempts[0];
+  const best = state.mockAttempts.reduce((max, item) => Math.max(max, item.accuracy || 0), 0);
+  body.innerHTML = `
+    <div class="report-grid">
+      <div class="report-tile">
+        <span>最近模拟</span>
+        <strong>${latest.accuracy}%</strong>
+      </div>
+      <div class="report-tile">
+        <span>最高正确率</span>
+        <strong>${best}%</strong>
+      </div>
+      <div class="report-tile">
+        <span>记录数</span>
+        <strong>${state.mockAttempts.length}</strong>
+      </div>
+      <div class="report-tile wide">
+        <span>最近薄弱项</span>
+        <strong>${latest.weakest || "暂无"}</strong>
+        <p>${latest.examTitle || "微型模拟卷"} · ${latest.date}</p>
+      </div>
+    </div>
+    ${renderMockHistory()}
+  `;
+  bindMockReportActions();
+}
+
 function renderMockTrend() {
   const recent = [...state.mockAttempts].slice(0, 6).reverse();
   const latest = state.mockAttempts[0];
@@ -2637,6 +2671,7 @@ document.getElementById("mockExamSelect").addEventListener("change", (event) => 
   saveState();
   resetMockTimerForExam();
   renderMockQuestion();
+  renderMockStoredReport();
 });
 
 document.getElementById("vocabSearch").addEventListener("input", (event) => renderVocab(event.target.value));
@@ -2706,6 +2741,7 @@ renderPractice("reading");
 renderMockExamSelect();
 resetMockTimerForExam();
 renderMockQuestion();
+renderMockStoredReport();
 renderReport();
 renderReviewQueue();
 renderScoreTips();
