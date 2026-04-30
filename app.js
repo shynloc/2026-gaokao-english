@@ -12,9 +12,11 @@ state.savedReviews = state.savedReviews || [];
 state.practiceIndex = state.practiceIndex || {};
 state.mockAnswers = state.mockAnswers || {};
 state.mockWriting = state.mockWriting || "";
+state.mockWritingByExam = state.mockWritingByExam || {};
 state.mockQuestionIndex = state.mockQuestionIndex || 0;
 state.calendarDone = state.calendarDone || {};
 state.mockAttempts = state.mockAttempts || [];
+state.activeMockExamId = state.activeMockExamId || "core";
 state.writingPromptId = state.writingPromptId || "";
 state.writingChecks = state.writingChecks || {};
 state.draftHistory = state.draftHistory || [];
@@ -920,6 +922,202 @@ const weeklyTemplates = {
   },
 };
 
+const builtInMockExams = [
+  {
+    id: "reading-boost",
+    title: "阅读强化微型卷",
+    description: "主攻阅读定位、七选五逻辑和语法动词空。",
+    duration: 42,
+    sections: [
+      {
+        id: "reading",
+        title: "阅读理解",
+        score: 24,
+        questions: [
+          {
+            id: "rb-r1",
+            prompt:
+              "A city library started lending musical instruments to teenagers. The program was created after teachers noticed that many students loved music but could not afford private lessons or instruments at home.",
+            question: "Why did the library start the program?",
+            options: ["To help teenagers access music resources", "To sell old instruments", "To replace school teachers", "To make the library quieter"],
+            answer: 0,
+            explain: "could not afford private lessons or instruments 对应 access music resources，核心是降低音乐学习门槛。",
+          },
+          {
+            id: "rb-r2",
+            prompt:
+              "Researchers found that students who reviewed notes within 24 hours remembered ideas more clearly a week later. The effect was strongest when students rewrote the notes in their own words.",
+            question: "What method worked best according to the research?",
+            options: ["Reading notes only before exams", "Copying every word twice", "Rewriting notes in one's own words", "Avoiding review for a week"],
+            answer: 2,
+            explain: "strongest when students rewrote the notes in their own words 是直接证据。",
+          },
+          {
+            id: "rb-r3",
+            prompt:
+              "The new school garden is not only a place for biology lessons. Students also use it to record weather changes, write observation journals, and design posters about healthy eating.",
+            question: "What is the main idea of the text?",
+            options: ["The garden supports learning in different ways", "Biology lessons are no longer important", "Students dislike outdoor classes", "Healthy eating posters are banned"],
+            answer: 0,
+            explain: "not only biology lessons 后列出多种用途，主旨是多方式支持学习。",
+          },
+        ],
+      },
+      {
+        id: "gap",
+        title: "七选五",
+        score: 12,
+        questions: [
+          {
+            id: "rb-g1",
+            prompt:
+              "Many people try to solve a difficult problem by working longer. ______ A short break can help the brain connect ideas in a new way.",
+            question: "选择最合适的句子填入空格。",
+            options: ["However, more time is not always the answer.", "The problem should be hidden.", "Everyone must work at night.", "Ideas are never useful."],
+            answer: 0,
+            explain: "后文 A short break 与 working longer 构成转折，However 最合适。",
+          },
+          {
+            id: "rb-g2",
+            prompt:
+              "Before joining a discussion, read the topic carefully. ______ This makes your opinion easier for others to understand.",
+            question: "选择最合适的句子填入空格。",
+            options: ["Then prepare one example to support your view.", "Leave the room immediately.", "Speak as fast as possible.", "Avoid listening to others."],
+            answer: 0,
+            explain: "This 指代 prepare one example，能让观点更容易被理解。",
+          },
+        ],
+      },
+      {
+        id: "grammar",
+        title: "语言运用",
+        score: 14,
+        questions: [
+          {
+            id: "rb-gr1",
+            prompt:
+              "The volunteers, ______ (train) by local doctors, helped visitors understand basic first-aid skills.",
+            question: "选择括号内单词的正确形式。",
+            options: ["training", "trained", "to train", "were trained"],
+            answer: 1,
+            explain: "句子已有谓语 helped，volunteers 与 train 是被动关系，用 trained 作后置定语。",
+          },
+          {
+            id: "rb-gr2",
+            prompt:
+              "The reason ______ he missed the meeting was that his train was delayed by heavy rain.",
+            question: "选择合适的连接词。",
+            options: ["why", "which", "where", "when"],
+            answer: 0,
+            explain: "先行词 reason，定语从句不缺主宾，表示原因，用 why。",
+          },
+        ],
+      },
+      {
+        id: "writing",
+        title: "写作任务",
+        score: 20,
+        writing: true,
+        prompt:
+          "假定你是李华，你校英文报正在征集“如何高效整理错题”的短文。请写一段 80-120 词的英文稿，内容包括：1. 一个具体方法；2. 这样做的理由；3. 给同学的建议。",
+        rubric: ["方法具体", "理由清楚", "语气适合校报", "结尾有行动建议"],
+      },
+    ],
+  },
+  {
+    id: "writing-diagnosis",
+    title: "写作诊断微型卷",
+    description: "兼顾应用文任务意识和续写动作链。",
+    duration: 40,
+    sections: [
+      {
+        id: "practical",
+        title: "应用文判断",
+        score: 12,
+        questions: [
+          {
+            id: "wd-p1",
+            prompt:
+              "Your English teacher Mr. Brown will give a lecture on English writing next Friday. You are asked to write a notice for the school English club.",
+            question: "Which piece of information must be included?",
+            options: ["The time and place of the lecture", "Your favorite movie", "A long story about your family", "The weather last Friday"],
+            answer: 0,
+            explain: "通知类应用文必须交代时间、地点、活动内容和参与方式。",
+          },
+          {
+            id: "wd-p2",
+            prompt:
+              "A friend feels nervous before a speech contest and asks you for advice.",
+            question: "Which sentence is most suitable in a letter of advice?",
+            options: ["You should disappear before the contest.", "Practising in front of two classmates may help you feel more confident.", "Speeches are boring.", "I know nothing about contests."],
+            answer: 1,
+            explain: "建议要具体、可执行，并与对方困难直接相关。",
+          },
+        ],
+      },
+      {
+        id: "continuation",
+        title: "读后续写判断",
+        score: 18,
+        questions: [
+          {
+            id: "wd-c1",
+            prompt:
+              "The original story ends with a boy standing in front of a broken model plane, afraid to tell his father the truth.",
+            question: "Which continuation best keeps the plot reasonable?",
+            options: ["He suddenly became a famous pilot.", "He took a deep breath, picked up the broken wing, and walked slowly toward his father.", "The weather changed three years later.", "Everyone forgot the model plane."],
+            answer: 1,
+            explain: "续写要承接原文冲突，用动作推动情节，B 保留了模型飞机和面对父亲的矛盾。",
+          },
+          {
+            id: "wd-c2",
+            prompt:
+              "The girl had promised to help her teammate finish the poster, but she lost the only photo they needed.",
+            question: "Which detail can best echo the original story?",
+            options: ["A new phone advertisement", "The missing photo and the promise to her teammate", "A random mountain trip", "A speech about world peace"],
+            answer: 1,
+            explain: "结尾回扣应来自原文关键物件或承诺，这里是 photo 和 promise。",
+          },
+        ],
+      },
+      {
+        id: "vocab",
+        title: "词块调用",
+        score: 10,
+        questions: [
+          {
+            id: "wd-v1",
+            prompt:
+              "主题：志愿服务。目标：表达“这次经历增强了我的责任感”。",
+            question: "Which expression is the most natural?",
+            options: ["made my responsibility big", "developed my sense of responsibility", "opened my responsibility", "built responsibility quickly"],
+            answer: 1,
+            explain: "develop a sense of responsibility 是自然搭配。",
+          },
+          {
+            id: "wd-v2",
+            prompt:
+              "主题：学习压力。目标：表达“把压力转化为动力”。",
+            question: "Which expression is the most natural?",
+            options: ["turn pressure into motivation", "move pressure into power room", "make pressure yellow", "delete pressure forever"],
+            answer: 0,
+            explain: "turn pressure into motivation 是可迁移到作文中的自然词块。",
+          },
+        ],
+      },
+      {
+        id: "writing",
+        title: "写作任务",
+        score: 20,
+        writing: true,
+        prompt:
+          "读后续写情境：主角在比赛前弄丢了队友交给他的号码牌，所有人都焦急地寻找。请续写接下来的情节，注意动作推进、人物情绪变化和结尾回扣。",
+        rubric: ["承接原文冲突", "动作推进自然", "人物情绪有变化", "结尾回扣号码牌或团队信任"],
+      },
+    ],
+  },
+];
+
 function updateProgress() {
   const completed = tasks.filter((task) => state.tasks[task.id]).length;
   document.getElementById("progressText").textContent = `${completed}/${tasks.length}`;
@@ -1601,7 +1799,7 @@ function renderMistakes() {
 let timerSeconds = 600;
 let timerHandle = null;
 let currentPracticeType = "reading";
-let mockSeconds = (externalContent.mockExam?.duration || 45) * 60;
+let mockSeconds = 45 * 60;
 let mockTimerHandle = null;
 
 function formatTime(seconds) {
@@ -1618,23 +1816,63 @@ function setTimer(minutes) {
   timerHandle = null;
 }
 
+function mockExams() {
+  const core = externalContent.mockExam
+    ? {
+        id: "core",
+        description: "覆盖阅读、七选五、语言运用和写作的基础稳分卷。",
+        ...externalContent.mockExam,
+      }
+    : null;
+  return [core, ...builtInMockExams].filter(Boolean);
+}
+
+function currentMockExam() {
+  const exams = mockExams();
+  if (!exams.some((exam) => exam.id === state.activeMockExamId)) {
+    state.activeMockExamId = exams[0]?.id || "core";
+  }
+  return exams.find((exam) => exam.id === state.activeMockExamId) || exams[0];
+}
+
+function mockWritingValue() {
+  return state.mockWritingByExam[state.activeMockExamId] ?? (state.activeMockExamId === "core" ? state.mockWriting : "");
+}
+
+function setMockWritingValue(value) {
+  state.mockWritingByExam[state.activeMockExamId] = value;
+  if (state.activeMockExamId === "core") {
+    state.mockWriting = value;
+  }
+}
+
+function practiceTypeForSection(sectionId) {
+  const map = {
+    gap: "seven",
+    writing: "continuation",
+  };
+  return map[sectionId] || sectionId;
+}
+
 function mockQuestions() {
-  const exam = externalContent.mockExam;
+  const exam = currentMockExam();
   if (!exam) {
     return [];
   }
 
   return exam.sections.flatMap((section) => {
     if (section.writing) {
-      return [{ ...section, type: "writing", sectionTitle: section.title }];
+      return [{ ...section, id: `${exam.id}:${section.id}:writing`, type: "writing", sectionTitle: section.title, examId: exam.id }];
     }
 
     return section.questions.map((question, index) => ({
       ...question,
+      id: `${exam.id}:${question.id}`,
       type: "choice",
       score: section.score / section.questions.length,
       sectionTitle: section.title,
       sectionId: section.id,
+      practiceType: practiceTypeForSection(section.id),
       localNo: index + 1,
     }));
   });
@@ -1645,11 +1883,26 @@ function setMockTimer(seconds = mockSeconds) {
   document.getElementById("mockTimer").textContent = formatTime(mockSeconds);
 }
 
+function resetMockTimerForExam() {
+  clearInterval(mockTimerHandle);
+  mockTimerHandle = null;
+  document.getElementById("mockStart").textContent = "开始";
+  setMockTimer((currentMockExam()?.duration || 45) * 60);
+}
+
+function renderMockExamSelect() {
+  const select = document.getElementById("mockExamSelect");
+  select.innerHTML = mockExams()
+    .map((exam) => `<option value="${exam.id}">${exam.title}</option>`)
+    .join("");
+  select.value = currentMockExam()?.id || "";
+}
+
 function renderAnswerSheet() {
   const questions = mockQuestions();
   document.getElementById("answerSheet").innerHTML = questions
     .map((question, index) => {
-      const answered = question.type === "writing" ? state.mockWriting.trim() : state.mockAnswers[question.id] !== undefined;
+      const answered = question.type === "writing" ? mockWritingValue().trim() : state.mockAnswers[question.id] !== undefined;
       return `
         <button class="${index === state.mockQuestionIndex ? "active" : ""} ${answered ? "answered" : ""}" type="button" data-mock-jump="${index}">
           ${index + 1}
@@ -1668,7 +1921,7 @@ function renderAnswerSheet() {
 }
 
 function renderMockQuestion() {
-  const exam = externalContent.mockExam;
+  const exam = currentMockExam();
   const questions = mockQuestions();
   if (!exam || !questions.length) {
     return;
@@ -1677,7 +1930,7 @@ function renderMockQuestion() {
   state.mockQuestionIndex = Math.min(state.mockQuestionIndex, questions.length - 1);
   const question = questions[state.mockQuestionIndex];
   document.getElementById("mockTitle").textContent = exam.title;
-  document.getElementById("mockProgress").textContent = `${state.mockQuestionIndex + 1}/${questions.length}`;
+  document.getElementById("mockProgress").textContent = `${state.mockQuestionIndex + 1}/${questions.length} · ${exam.description || "微型诊断"}`;
 
   if (question.type === "writing") {
     document.getElementById("mockQuestion").innerHTML = `
@@ -1687,14 +1940,14 @@ function renderMockQuestion() {
       </div>
       <p>${question.prompt}</p>
       <ul class="rubric-list">${question.rubric.map((item) => `<li>${item}</li>`).join("")}</ul>
-      <textarea id="mockWriting" rows="8" placeholder="在这里写模拟卷作文草稿，页面会自动保存。">${state.mockWriting}</textarea>
+      <textarea id="mockWriting" rows="8" placeholder="在这里写模拟卷作文草稿，页面会自动保存。">${mockWritingValue()}</textarea>
       <div class="practice-actions">
         <button type="button" id="mockPrev">上一题</button>
         <button type="button" id="mockNext">下一题</button>
       </div>
     `;
     document.getElementById("mockWriting").addEventListener("input", (event) => {
-      state.mockWriting = event.target.value;
+      setMockWritingValue(event.target.value);
       saveState();
       renderAnswerSheet();
     });
@@ -1748,12 +2001,41 @@ function renderMockQuestion() {
   renderAnswerSheet();
 }
 
+function saveMockWrongAnswers(choiceQuestions) {
+  let added = 0;
+  choiceQuestions.forEach((question) => {
+    const selected = state.mockAnswers[question.id];
+    if (selected === question.answer) {
+      return;
+    }
+    const key = `mock:${question.id}`;
+    const current = state.savedReviews.find((review) => review.key === key);
+    const text = `${selected === undefined ? "未作答" : `你的答案：${String.fromCharCode(65 + selected)}`}；正确答案：${String.fromCharCode(65 + question.answer)}。${question.explain}`;
+    if (!current) {
+      state.savedReviews.push({
+        key,
+        type: question.practiceType,
+        title: `${currentMockExam().title} · ${question.sectionTitle}第 ${question.localNo} 题`,
+        text,
+        tags: defaultTagsForType(question.practiceType),
+      });
+      added += 1;
+    } else {
+      current.text = text;
+      current.tags = current.tags?.length ? current.tags : defaultTagsForType(question.practiceType);
+    }
+  });
+  return added;
+}
+
 function submitMockExam() {
+  const exam = currentMockExam();
   const questions = mockQuestions();
   const choiceQuestions = questions.filter((question) => question.type === "choice");
   const correct = choiceQuestions.filter((question) => state.mockAnswers[question.id] === question.answer);
   const answered = choiceQuestions.filter((question) => state.mockAnswers[question.id] !== undefined);
-  const writingWords = state.mockWriting.trim() ? state.mockWriting.trim().split(/\s+/).length : 0;
+  const writingDraft = mockWritingValue();
+  const writingWords = writingDraft.trim() ? writingDraft.trim().split(/\s+/).length : 0;
   const rawScore = correct.reduce((sum, question) => sum + question.score, 0);
   const totalChoiceScore = choiceQuestions.reduce((sum, question) => sum + question.score, 0);
   const sectionStats = choiceQuestions.reduce((acc, question) => {
@@ -1769,12 +2051,15 @@ function submitMockExam() {
     .sort((a, b) => a.rate - b.rate)[0];
   const attempt = {
     date: new Date().toLocaleString("zh-CN", { month: "2-digit", day: "2-digit", hour: "2-digit", minute: "2-digit" }),
+    examId: exam.id,
+    examTitle: exam.title,
     score: Math.round(rawScore),
     total: totalChoiceScore,
     accuracy: choiceQuestions.length ? Math.round((correct.length / choiceQuestions.length) * 100) : 0,
     writingWords,
     weakest: weakestSection?.title || "暂无",
   };
+  const addedReviews = saveMockWrongAnswers(choiceQuestions);
   state.mockAttempts = [attempt, ...state.mockAttempts].slice(0, 6);
   saveState();
 
@@ -1792,6 +2077,14 @@ function submitMockExam() {
         <span>作文词数</span>
         <strong>${writingWords}</strong>
       </div>
+      <div class="report-tile">
+        <span>错题入库</span>
+        <strong>${addedReviews}</strong>
+      </div>
+    </div>
+    <div class="mock-auto-note">
+      <strong>${exam.title}</strong>
+      <p>本次未答或答错的选择题已自动进入收藏回炉，并带上错因标签，可在学习报告和周计划中继续联动。</p>
     </div>
     <div class="mock-review-list">
       ${choiceQuestions
@@ -1811,6 +2104,8 @@ function submitMockExam() {
     ${renderMockHistory()}
   `;
 
+  renderReviewQueue();
+  renderReport();
   document.getElementById("mockReport").scrollIntoView({ behavior: "smooth", block: "start" });
 }
 
@@ -1830,6 +2125,7 @@ function renderMockHistory() {
               <article class="${index === 0 ? "latest" : ""}">
                 <span>${item.date}</span>
                 <strong>${item.score}/${item.total}</strong>
+                <p>${item.examTitle || "微型模拟卷"}</p>
                 <p>正确率 ${item.accuracy}% · 作文 ${item.writingWords} 词</p>
                 <em>薄弱项：${item.weakest}</em>
               </article>
@@ -2253,6 +2549,14 @@ document.getElementById("mockSubmit").addEventListener("click", () => {
   submitMockExam();
 });
 
+document.getElementById("mockExamSelect").addEventListener("change", (event) => {
+  state.activeMockExamId = event.target.value;
+  state.mockQuestionIndex = 0;
+  saveState();
+  resetMockTimerForExam();
+  renderMockQuestion();
+});
+
 document.getElementById("vocabSearch").addEventListener("input", (event) => renderVocab(event.target.value));
 
 document.getElementById("writingDraft").value = state.draft;
@@ -2317,7 +2621,8 @@ initWritingLab();
 renderVocab();
 renderMistakes();
 renderPractice("reading");
-setMockTimer();
+renderMockExamSelect();
+resetMockTimerForExam();
 renderMockQuestion();
 renderReport();
 renderReviewQueue();
