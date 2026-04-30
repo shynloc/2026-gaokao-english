@@ -215,6 +215,8 @@ h1 {
 .score-card,
 .score-blueprint,
 .score-rules,
+.weekly-planner,
+.weekly-insight,
 .report-card,
 .review-queue,
 .mock-card,
@@ -677,6 +679,189 @@ meter {
 .score-action strong,
 .score-action small {
   display: block;
+}
+
+.weekly-section {
+  display: grid;
+  grid-template-columns: minmax(0, 1.6fr) minmax(300px, 0.8fr);
+  gap: 18px;
+}
+
+.weekly-planner,
+.weekly-insight {
+  padding: 22px;
+}
+
+.weekly-control {
+  display: flex;
+  align-items: end;
+  justify-content: space-between;
+  gap: 12px;
+  margin: 18px 0;
+  padding: 12px;
+  border: 1px solid var(--line);
+  background: var(--bg);
+}
+
+.weekly-control label {
+  display: grid;
+  gap: 8px;
+  color: var(--muted);
+  font-size: 13px;
+  font-weight: 900;
+}
+
+.weekly-control button {
+  min-height: 40px;
+  border: 1px solid var(--ink);
+  background: var(--ink);
+  color: var(--paper);
+  padding: 9px 14px;
+  cursor: pointer;
+  font-weight: 900;
+}
+
+.weekly-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+  gap: 12px;
+  padding-bottom: 6px;
+}
+
+.weekly-day {
+  display: grid;
+  gap: 12px;
+  min-height: 410px;
+  padding: 16px;
+  border: 1px solid var(--line);
+  background: var(--bg);
+}
+
+.weekly-day.done {
+  border-color: var(--green);
+  background: color-mix(in srgb, var(--green) 9%, var(--paper));
+}
+
+.weekly-day-head,
+.weekly-actions,
+.weekly-summary-card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.weekly-day-head span,
+.weekly-summary-card span,
+.weekly-reason-list span {
+  color: var(--orange);
+  font-size: 12px;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+.weekly-day-head time {
+  color: var(--green);
+  font-weight: 900;
+}
+
+.weekly-day h3 {
+  margin: 0;
+  font-size: 21px;
+}
+
+.weekly-day p,
+.weekly-reason-list p {
+  margin: 0;
+  color: var(--muted);
+  line-height: 1.65;
+}
+
+.weekly-day ul {
+  display: grid;
+  gap: 8px;
+  margin: 0;
+  padding-left: 18px;
+  color: var(--muted);
+  line-height: 1.55;
+}
+
+.weekly-output {
+  margin-top: auto;
+  padding: 12px;
+  border-left: 4px solid var(--green);
+  background: color-mix(in srgb, var(--green) 8%, transparent);
+  color: var(--muted);
+  line-height: 1.55;
+}
+
+.weekly-actions {
+  align-items: stretch;
+  flex-wrap: wrap;
+}
+
+.weekly-actions button {
+  min-height: 36px;
+  border: 1px solid var(--ink);
+  background: var(--paper);
+  color: var(--ink);
+  padding: 7px 10px;
+  cursor: pointer;
+  font-weight: 900;
+}
+
+.weekly-actions button:hover {
+  background: var(--ink);
+  color: var(--paper);
+}
+
+.weekly-actions label {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 36px;
+  color: var(--muted);
+  font-size: 13px;
+  font-weight: 900;
+}
+
+.weekly-actions input {
+  width: 16px;
+  height: 16px;
+  accent-color: var(--green);
+}
+
+.weekly-summary-card {
+  align-items: start;
+  flex-direction: column;
+  padding: 18px;
+  border: 1px solid var(--line);
+  background: var(--ink);
+  color: var(--paper);
+}
+
+.weekly-summary-card strong {
+  color: var(--yellow);
+  font-size: 40px;
+  line-height: 1;
+}
+
+.weekly-summary-card p {
+  margin: 0;
+  color: color-mix(in srgb, var(--paper) 76%, transparent);
+  line-height: 1.65;
+}
+
+.weekly-reason-list {
+  display: grid;
+  gap: 10px;
+  margin-top: 14px;
+}
+
+.weekly-reason-list article {
+  padding: 14px;
+  border: 1px solid var(--line);
+  background: var(--bg);
 }
 
 .calendar-day {
@@ -1921,6 +2106,7 @@ textarea {
   .practice-section,
   .report-section,
   .prescription-section,
+  .weekly-section,
   .mock-section,
   .split-section {
     grid-template-columns: 1fr;
@@ -1940,6 +2126,10 @@ textarea {
 
   .calendar-grid {
     grid-template-columns: repeat(7, minmax(220px, 1fr));
+  }
+
+  .weekly-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
   .prescription-layout {
@@ -1996,6 +2186,7 @@ textarea {
 
   .practice-toolbar,
   .mock-toolbar,
+  .weekly-control,
   .writing-prompt-tools,
   .timer-box {
     align-items: stretch;
@@ -2049,7 +2240,16 @@ textarea {
     overflow-x: visible;
   }
 
+  .weekly-grid {
+    grid-template-columns: 1fr;
+    overflow-x: visible;
+  }
+
   .calendar-day {
+    min-height: 0;
+  }
+
+  .weekly-day {
     min-height: 0;
   }
 }

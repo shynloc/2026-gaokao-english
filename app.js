@@ -21,6 +21,8 @@ state.draftHistory = state.draftHistory || [];
 state.activePackId = state.activePackId || "";
 state.packDone = state.packDone || {};
 state.scoreDone = state.scoreDone || {};
+state.weeklyIntensity = state.weeklyIntensity || "75";
+state.weeklyDone = state.weeklyDone || {};
 
 const externalContent = window.E26_CONTENT || {};
 
@@ -855,6 +857,69 @@ const defaultErrorTagsByType = {
   listening: ["signal"],
 };
 
+const weeklyTemplates = {
+  reading: {
+    title: "阅读证据日",
+    mission: "把每一道阅读题都落实到证据句和选项改写。",
+    tasks: ["限时阅读 2 篇，圈出定位句", "给 3 个干扰项贴错因标签", "复述 1 段文章主线"],
+    output: "一张阅读证据表",
+  },
+  seven: {
+    title: "七选五逻辑日",
+    mission: "训练空格功能判断，减少只凭语感选句。",
+    tasks: ["完成 2 组七选五", "标注承上、启下、转折、总结", "整理 5 个复现词或代词指代"],
+    output: "一组逻辑连接标签",
+  },
+  cloze: {
+    title: "完形语境日",
+    mission: "用情节线和情绪线做选择，不单看词义。",
+    tasks: ["完成 1 篇完形", "画出人物情绪变化", "复盘 3 个上下文线索"],
+    output: "一条完形情节线",
+  },
+  grammar: {
+    title: "语法判断日",
+    mission: "把动词空、词性转换和从句连接词按步骤判断。",
+    tasks: ["动词空 12 题，写判断理由", "词性转换 8 题，标修饰对象", "改写 3 个错句"],
+    output: "5 个语法判断理由",
+  },
+  practical: {
+    title: "应用文保分日",
+    mission: "保证任务完整、语气合适、信息密度够。",
+    tasks: ["抽 1 个应用文任务", "列对象、目的、必要信息", "写 90-110 词并按清单自查"],
+    output: "一篇可归档应用文",
+  },
+  continuation: {
+    title: "续写动作链日",
+    mission: "用动作和细节承接原文，避免剧情跳跃。",
+    tasks: ["列人物目标和阻碍", "写 6 句动作链", "补 1 个原文细节回扣"],
+    output: "一条续写动作链",
+  },
+  vocab: {
+    title: "词块调用日",
+    mission: "把主题词块从认识推进到写作可用。",
+    tasks: ["选 8 个主题词块造句", "把 3 句改成作文句", "检查动词和抽象名词搭配"],
+    output: "8 个可迁移词块句",
+  },
+  listening: {
+    title: "听力信号日",
+    mission: "抓转折、否定、比较、时间和数字变化。",
+    tasks: ["听 15 道场景/态度/数字题", "记录漏听信号词", "复述 3 个错误选项如何偷换"],
+    output: "一组听力信号词清单",
+  },
+  mock: {
+    title: "微型模拟日",
+    mission: "用完整流程检查时间分配和薄弱题型。",
+    tasks: ["完成一套微型模拟卷", "查看模拟报告", "把错题加入回炉并标错因"],
+    output: "一份模拟复盘",
+  },
+  review: {
+    title: "回炉整理日",
+    mission: "把本周错因变成下一轮训练动作。",
+    tasks: ["回看收藏回炉题", "清理高频错因标签", "重写 1 段作文或 5 个语法理由"],
+    output: "下周第一天任务",
+  },
+};
+
 function updateProgress() {
   const completed = tasks.filter((task) => state.tasks[task.id]).length;
   document.getElementById("progressText").textContent = `${completed}/${tasks.length}`;
@@ -1227,6 +1292,140 @@ function renderScoreBlueprint() {
       state.scoreDone[input.dataset.scoreAction] = input.checked;
       saveState();
       renderScoreBlueprint();
+    });
+  });
+}
+
+function moduleTitle(type) {
+  return modules.find((module) => module.id === type)?.title || weeklyTemplates[type]?.title || type;
+}
+
+function weeklyPriorityTypes() {
+  const fromTags = errorTagStats().map((tag) => tag.type);
+  const fromStats = modules
+    .map((module) => {
+      const stats = getStats(module.id);
+      const rate = stats.answered ? stats.correct / stats.answered : 0.5;
+      return { type: module.id, rate, answered: stats.answered };
+    })
+    .sort((a, b) => a.rate - b.rate || a.answered - b.answered)
+    .map((item) => item.type);
+  const target = Number(state.targetScore) || 125;
+  const defaults = target >= 135 ? ["reading", "continuation", "grammar", "listening"] : target < 110 ? ["vocab", "grammar", "practical", "reading"] : ["reading", "grammar", "continuation", "listening"];
+
+  return [...new Set([...fromTags, ...fromStats, ...defaults])].filter((type) => weeklyTemplates[type]);
+}
+
+function weeklyPlan() {
+  const priority = weeklyPriorityTypes();
+  const minutes = Number(state.weeklyIntensity) || 75;
+  const sequence = [
+    priority[0] || "reading",
+    priority[1] || "grammar",
+    priority[2] || "continuation",
+    priority[3] || "listening",
+    priority[4] || "seven",
+    "mock",
+    "review",
+  ];
+
+  return sequence.map((type, index) => {
+    const template = weeklyTemplates[type] || weeklyTemplates.reading;
+    const isMock = type === "mock";
+    const isReview = type === "review";
+    return {
+      day: index + 1,
+      type,
+      title: template.title,
+      mission: template.mission,
+      tasks: template.tasks,
+      output: template.output,
+      minutes: isMock ? minutes + 20 : isReview ? Math.max(45, minutes - 15) : minutes,
+      practiceType: isMock ? "reading" : isReview ? priority[0] || "reading" : type,
+    };
+  });
+}
+
+function renderWeeklyPlan() {
+  const grid = document.getElementById("weeklyGrid");
+  const insight = document.getElementById("weeklyInsight");
+  if (!grid || !insight) {
+    return;
+  }
+
+  const plan = weeklyPlan();
+  const priority = weeklyPriorityTypes();
+  const tagStats = errorTagStats();
+  const doneCount = plan.filter((day) => state.weeklyDone[day.day]).length;
+  const target = Number(state.targetScore) || 125;
+
+  document.getElementById("weeklyIntensity").value = state.weeklyIntensity;
+  grid.innerHTML = plan
+    .map(
+      (day) => `
+        <article class="weekly-day ${state.weeklyDone[day.day] ? "done" : ""}">
+          <div class="weekly-day-head">
+            <span>Day ${day.day}</span>
+            <time>${day.minutes} min</time>
+          </div>
+          <h3>${day.title}</h3>
+          <p>${day.mission}</p>
+          <ul>${day.tasks.map((task) => `<li>${task}</li>`).join("")}</ul>
+          <div class="weekly-output">${day.output}</div>
+          <div class="weekly-actions">
+            <button type="button" data-week-practice="${day.practiceType}">练对应专项</button>
+            <label>
+              <input type="checkbox" data-week-day="${day.day}" ${state.weeklyDone[day.day] ? "checked" : ""} />
+              完成
+            </label>
+          </div>
+        </article>
+      `
+    )
+    .join("");
+
+  insight.innerHTML = `
+    <div class="section-heading">
+      <p>Plan Logic</p>
+      <h2>生成依据</h2>
+    </div>
+    <div class="weekly-summary-card">
+      <span>目标 ${target} 分 · 剩余 ${daysLeft} 天</span>
+      <strong>${doneCount}/7</strong>
+      <p>本周优先顺序：${priority.slice(0, 4).map(moduleTitle).join(" / ")}</p>
+    </div>
+    <div class="weekly-reason-list">
+      ${
+        tagStats.length
+          ? tagStats
+              .slice(0, 3)
+              .map(
+                (tag) => `
+                  <article>
+                    <span>${tag.label}</span>
+                    <p>${tag.action}</p>
+                  </article>
+                `
+              )
+              .join("")
+          : `<article><span>默认策略</span><p>还没有足够错因记录，先按阅读、语法、写作、听力建立基础训练节奏。</p></article>`
+      }
+    </div>
+  `;
+
+  document.querySelectorAll("[data-week-practice]").forEach((button) => {
+    button.addEventListener("click", () => {
+      document.getElementById("practiceSelect").value = button.dataset.weekPractice;
+      renderPractice(button.dataset.weekPractice);
+      document.getElementById("practice").scrollIntoView({ behavior: "smooth", block: "start" });
+    });
+  });
+
+  document.querySelectorAll("[data-week-day]").forEach((input) => {
+    input.addEventListener("change", () => {
+      state.weeklyDone[input.dataset.weekDay] = input.checked;
+      saveState();
+      renderWeeklyPlan();
     });
   });
 }
@@ -1845,6 +2044,8 @@ function renderReport() {
       document.getElementById("practice").scrollIntoView({ behavior: "smooth", block: "start" });
     });
   });
+
+  renderWeeklyPlan();
 }
 
 function renderReviewQueue() {
@@ -1946,6 +2147,19 @@ document.getElementById("targetScore").addEventListener("input", (event) => {
   saveState();
   renderScoreTips();
   renderScoreBlueprint();
+  renderWeeklyPlan();
+});
+
+document.getElementById("weeklyIntensity").addEventListener("change", (event) => {
+  state.weeklyIntensity = event.target.value;
+  saveState();
+  renderWeeklyPlan();
+});
+
+document.getElementById("refreshWeeklyPlan").addEventListener("click", () => {
+  state.weeklyDone = {};
+  saveState();
+  renderWeeklyPlan();
 });
 
 document.querySelectorAll("[data-plan]").forEach((button) => {
@@ -2096,6 +2310,7 @@ renderModules();
 renderCalendar();
 renderPrescription();
 renderScoreBlueprint();
+renderWeeklyPlan();
 renderLibrary();
 renderWriting("practical");
 initWritingLab();

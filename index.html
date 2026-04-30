@@ -18,6 +18,7 @@
       <nav class="nav" aria-label="主导航">
         <a href="#plan">计划</a>
         <a href="#blueprint">目标</a>
+        <a href="#weekly">周计划</a>
         <a href="#skills">专项</a>
         <a href="#calendar">日历</a>
         <a href="#practice">练习</a>
@@ -127,6 +128,29 @@
           <div id="scoreBlueprintSummary"></div>
           <div class="score-action-list" id="scoreActionList"></div>
         </aside>
+      </section>
+
+      <section class="weekly-section" id="weekly">
+        <article class="weekly-planner">
+          <div class="section-heading">
+            <p>Weekly Planner</p>
+            <h2>智能周计划</h2>
+          </div>
+          <div class="weekly-control">
+            <label>
+              每日可用时间
+              <select id="weeklyIntensity">
+                <option value="55">轻量 55 min</option>
+                <option value="75">标准 75 min</option>
+                <option value="95">强化 95 min</option>
+              </select>
+            </label>
+            <button type="button" id="refreshWeeklyPlan">重新生成</button>
+          </div>
+          <div class="weekly-grid" id="weeklyGrid"></div>
+        </article>
+
+        <aside class="weekly-insight" id="weeklyInsight"></aside>
       </section>
 
       <section class="skill-section" id="skills">
