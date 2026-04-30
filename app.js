@@ -13,6 +13,7 @@ state.practiceIndex = state.practiceIndex || {};
 state.mockAnswers = state.mockAnswers || {};
 state.mockWriting = state.mockWriting || "";
 state.mockQuestionIndex = state.mockQuestionIndex || 0;
+state.calendarDone = state.calendarDone || {};
 
 const externalContent = window.E26_CONTENT || {};
 
@@ -821,6 +822,37 @@ function renderLibrary(category = "checklist") {
     .join("");
 }
 
+function renderCalendar() {
+  const calendar = externalContent.sprintCalendar || [];
+  document.getElementById("calendarGrid").innerHTML = calendar
+    .map(
+      (day) => `
+        <article class="calendar-day ${state.calendarDone[day.day] ? "done" : ""}">
+          <div>
+            <span>Day ${day.day}</span>
+            <strong>${day.focus}</strong>
+          </div>
+          <time>${day.minutes} min</time>
+          <ul>${day.tasks.map((task) => `<li>${task}</li>`).join("")}</ul>
+          <p>${day.output}</p>
+          <button type="button" data-calendar-day="${day.day}">
+            ${state.calendarDone[day.day] ? "已完成" : "标记完成"}
+          </button>
+        </article>
+      `
+    )
+    .join("");
+
+  document.querySelectorAll("[data-calendar-day]").forEach((button) => {
+    button.addEventListener("click", () => {
+      const day = button.dataset.calendarDay;
+      state.calendarDone[day] = !state.calendarDone[day];
+      saveState();
+      renderCalendar();
+    });
+  });
+}
+
 function renderWriting(tabName) {
   const data = writing[tabName];
   document.getElementById("writingContent").innerHTML = `
@@ -1399,6 +1431,7 @@ document.getElementById("themeToggle").addEventListener("click", () => {
 renderTasks();
 renderPlan();
 renderModules();
+renderCalendar();
 renderLibrary();
 renderWriting("practical");
 renderVocab();

@@ -217,6 +217,7 @@ h1 {
 .review-queue,
 .mock-card,
 .mock-report,
+.calendar-section,
 .library-section,
 .writing-lab,
 .vocab-panel,
@@ -513,6 +514,87 @@ meter {
 .skill-section,
 .split-section {
   margin: 34px 0;
+}
+
+.calendar-section {
+  margin: 34px 0;
+  padding: clamp(18px, 2.6vw, 28px);
+}
+
+.calendar-grid {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(180px, 1fr));
+  gap: 12px;
+  overflow-x: auto;
+  padding-bottom: 6px;
+}
+
+.calendar-day {
+  display: grid;
+  align-content: start;
+  gap: 12px;
+  min-height: 360px;
+  padding: 16px;
+  border: 1px solid var(--line);
+  background: var(--bg);
+}
+
+.calendar-day.done {
+  border-color: var(--green);
+  background: color-mix(in srgb, var(--green) 10%, var(--paper));
+}
+
+.calendar-day span {
+  display: block;
+  color: var(--orange);
+  font-size: 12px;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+.calendar-day strong {
+  display: block;
+  margin-top: 8px;
+  font-size: 20px;
+  line-height: 1.25;
+}
+
+.calendar-day time {
+  color: var(--green);
+  font-weight: 900;
+}
+
+.calendar-day ul {
+  display: grid;
+  gap: 8px;
+  margin: 0;
+  padding-left: 18px;
+  color: var(--muted);
+  line-height: 1.55;
+}
+
+.calendar-day p {
+  margin: 0;
+  padding: 12px;
+  border-left: 4px solid var(--green);
+  background: color-mix(in srgb, var(--green) 8%, transparent);
+  color: var(--muted);
+  line-height: 1.6;
+}
+
+.calendar-day button {
+  align-self: end;
+  min-height: 38px;
+  border: 1px solid var(--ink);
+  background: var(--paper);
+  color: var(--ink);
+  cursor: pointer;
+  font-weight: 800;
+}
+
+.calendar-day.done button {
+  background: var(--green);
+  color: #fff;
 }
 
 .module-grid {
@@ -1224,6 +1306,10 @@ textarea {
   .library-grid {
     grid-template-columns: repeat(2, 1fr);
   }
+
+  .calendar-grid {
+    grid-template-columns: repeat(7, minmax(220px, 1fr));
+  }
 }
 
 @media (max-width: 640px) {
@@ -1288,5 +1374,14 @@ textarea {
 
   .report-grid {
     grid-template-columns: 1fr;
+  }
+
+  .calendar-grid {
+    grid-template-columns: 1fr;
+    overflow-x: visible;
+  }
+
+  .calendar-day {
+    min-height: 0;
   }
 }
