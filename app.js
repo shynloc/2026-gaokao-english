@@ -27,6 +27,7 @@ state.weeklyIntensity = state.weeklyIntensity || "75";
 state.weeklyDone = state.weeklyDone || {};
 
 const externalContent = window.E26_CONTENT || {};
+const contentExpansion = window.E26_EXPANSION || {};
 
 const saveState = () => localStorage.setItem(storageKey, JSON.stringify(state));
 
@@ -613,6 +614,15 @@ Object.entries(extraPractice).forEach(([type, items]) => {
   practiceSets[type].push(...items);
 });
 
+[externalContent.practiceExpansion, contentExpansion.practiceExpansion].filter(Boolean).forEach((source) => {
+  Object.entries(source).forEach(([type, items]) => {
+    if (!practiceSets[type]) {
+      return;
+    }
+    practiceSets[type].push(...items);
+  });
+});
+
 const writing = {
   practical: {
     title: "应用文：三段式但不模板腔",
@@ -643,6 +653,8 @@ const vocab = [
   "turn pressure into motivation",
   "adapt to a changing environment",
 ];
+
+vocab.push(...(externalContent.vocabExtra || []), ...(contentExpansion.vocabExtra || []));
 
 const defaultMistakes = [
   {
@@ -729,6 +741,15 @@ const libraryContent = {
     },
   ],
 };
+
+[externalContent.libraryExtra, contentExpansion.libraryExtra].filter(Boolean).forEach((source) => {
+  Object.entries(source).forEach(([category, cards]) => {
+    if (!libraryContent[category]) {
+      return;
+    }
+    libraryContent[category].push(...cards);
+  });
+});
 
 const prescriptionPacks = externalContent.prescriptionPacks || [
   {
