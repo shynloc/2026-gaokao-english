@@ -831,6 +831,30 @@ const scoreActions = [
   { id: "output", title: "每天留一个可见产出", detail: "可以是一张证据表、5 个动词空理由、1 段续写动作链或 1 篇应用文草稿。" },
 ];
 
+const errorTags = [
+  { id: "evidence", label: "定位证据", type: "reading", action: "回到原文证据句，标出正确选项的同义改写。" },
+  { id: "scope", label: "范围偷换", type: "reading", action: "比较选项中的 all, only, never, mainly 等范围词。" },
+  { id: "logic", label: "逻辑断裂", type: "seven", action: "先判断空格功能：承上、启下、转折、例证或总结。" },
+  { id: "context", label: "语境线索", type: "cloze", action: "复述人物状态和事件方向，再回看空格前后五句。" },
+  { id: "predicate", label: "谓语判断", type: "grammar", action: "先数谓语动词，再判定动词空是谓语还是非谓语。" },
+  { id: "wordform", label: "词性转换", type: "grammar", action: "看空格修饰对象，确定名词、形容词、副词或动名词。" },
+  { id: "task", label: "任务要点", type: "practical", action: "写前圈出对象、目的、必要信息，写后逐项核对。" },
+  { id: "plot", label: "情节跳跃", type: "continuation", action: "补一个动作节点、一个情绪变化和一个原文细节回扣。" },
+  { id: "collocation", label: "搭配不准", type: "vocab", action: "把词块放进完整句子，重点检查动词和抽象名词搭配。" },
+  { id: "signal", label: "漏听信号", type: "listening", action: "重听转折、否定、比较、时间和数字变化处。" },
+];
+
+const defaultErrorTagsByType = {
+  reading: ["evidence", "scope"],
+  seven: ["logic"],
+  cloze: ["context"],
+  grammar: ["predicate", "wordform"],
+  practical: ["task"],
+  continuation: ["plot"],
+  vocab: ["collocation"],
+  listening: ["signal"],
+};
+
 function updateProgress() {
   const completed = tasks.filter((task) => state.tasks[task.id]).length;
   document.getElementById("progressText").textContent = `${completed}/${tasks.length}`;
@@ -1640,18 +1664,50 @@ function recordAnswer(type, isCorrect) {
   renderReport();
 }
 
+function defaultTagsForType(type) {
+  return defaultErrorTagsByType[type] || ["evidence"];
+}
+
+function tagById(id) {
+  return errorTags.find((tag) => tag.id === id);
+}
+
+function reviewTags(review) {
+  return review.tags?.length ? review.tags : defaultTagsForType(review.type);
+}
+
+function errorTagStats() {
+  const counts = {};
+  state.savedReviews.forEach((review) => {
+    reviewTags(review).forEach((tagId) => {
+      const tag = tagById(tagId);
+      if (!tag) {
+        return;
+      }
+      counts[tagId] = counts[tagId] || { ...tag, count: 0 };
+      counts[tagId].count += 1;
+    });
+  });
+  return Object.values(counts).sort((a, b) => b.count - a.count);
+}
+
 function saveForReview(type, item) {
   const key = `${type}:${item.title}`;
-  if (!state.savedReviews.some((review) => review.key === key)) {
+  const current = state.savedReviews.find((review) => review.key === key);
+  if (!current) {
     state.savedReviews.push({
       key,
       type,
       title: item.title,
       text: item.explain,
+      tags: defaultTagsForType(type),
     });
-    saveState();
+  } else if (!current.tags?.length) {
+    current.tags = defaultTagsForType(type);
   }
+    saveState();
   renderReviewQueue();
+  renderReport();
 }
 
 function renderPractice(type) {
@@ -1752,6 +1808,43 @@ function renderReport() {
       <p>${weakest.answered ? "把这个专项的错题解释复述一遍，再做下一题。" : "建议从阅读理解或语法填空开始，最容易建立稳定分。"}</p>
     </div>
   `;
+
+  const tagStats = errorTagStats();
+  document.getElementById("errorTagReport").innerHTML = `
+    <div class="error-report-head">
+      <span>错因雷达</span>
+      <strong>${tagStats.length ? `最高频：${tagStats[0].label}` : "先积累 1 道错题"}</strong>
+    </div>
+    ${
+      tagStats.length
+        ? `<div class="error-rank">
+            ${tagStats
+              .slice(0, 4)
+              .map(
+                (tag) => `
+                  <article>
+                    <div>
+                      <span>${tag.label}</span>
+                      <strong>${tag.count}</strong>
+                    </div>
+                    <p>${tag.action}</p>
+                    <button type="button" data-tag-practice="${tag.type}">回练对应题型</button>
+                  </article>
+                `
+              )
+              .join("")}
+          </div>`
+        : `<p class="empty-state">做错或收藏题目后，这里会自动统计错因标签，并给出回练入口。</p>`
+    }
+  `;
+
+  document.querySelectorAll("[data-tag-practice]").forEach((button) => {
+    button.addEventListener("click", () => {
+      document.getElementById("practiceSelect").value = button.dataset.tagPractice;
+      renderPractice(button.dataset.tagPractice);
+      document.getElementById("practice").scrollIntoView({ behavior: "smooth", block: "start" });
+    });
+  });
 }
 
 function renderReviewQueue() {
@@ -1767,6 +1860,18 @@ function renderReviewQueue() {
         <article class="review-item">
           <strong>${item.title}</strong>
           <p>${item.text}</p>
+          <div class="review-tags" aria-label="错因标签">
+            ${errorTags
+              .filter((tag) => tag.type === item.type || reviewTags(item).includes(tag.id))
+              .map(
+                (tag) => `
+                  <button class="${reviewTags(item).includes(tag.id) ? "active" : ""}" type="button" data-review-index="${index}" data-review-tag="${tag.id}">
+                    ${tag.label}
+                  </button>
+                `
+              )
+              .join("")}
+          </div>
           <div>
             <button type="button" data-jump-review="${index}">再练同类</button>
             <button type="button" data-remove-review="${index}">移出</button>
@@ -1782,6 +1887,21 @@ function renderReviewQueue() {
       document.getElementById("practiceSelect").value = item.type;
       renderPractice(item.type);
       document.getElementById("practice").scrollIntoView({ behavior: "smooth", block: "start" });
+    });
+  });
+
+  document.querySelectorAll("[data-review-tag]").forEach((button) => {
+    button.addEventListener("click", () => {
+      const review = state.savedReviews[Number(button.dataset.reviewIndex)];
+      review.tags = [...reviewTags(review)];
+      if (review.tags.includes(button.dataset.reviewTag)) {
+        review.tags = review.tags.filter((tag) => tag !== button.dataset.reviewTag);
+      } else {
+        review.tags.push(button.dataset.reviewTag);
+      }
+      saveState();
+      renderReviewQueue();
+      renderReport();
     });
   });
 
