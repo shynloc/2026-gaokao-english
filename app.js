@@ -14,6 +14,7 @@ state.mockAnswers = state.mockAnswers || {};
 state.mockWriting = state.mockWriting || "";
 state.mockQuestionIndex = state.mockQuestionIndex || 0;
 state.calendarDone = state.calendarDone || {};
+state.mockAttempts = state.mockAttempts || [];
 
 const externalContent = window.E26_CONTENT || {};
 
@@ -1069,6 +1070,27 @@ function submitMockExam() {
   const writingWords = state.mockWriting.trim() ? state.mockWriting.trim().split(/\s+/).length : 0;
   const rawScore = correct.reduce((sum, question) => sum + question.score, 0);
   const totalChoiceScore = choiceQuestions.reduce((sum, question) => sum + question.score, 0);
+  const sectionStats = choiceQuestions.reduce((acc, question) => {
+    acc[question.sectionTitle] = acc[question.sectionTitle] || { total: 0, correct: 0 };
+    acc[question.sectionTitle].total += 1;
+    if (state.mockAnswers[question.id] === question.answer) {
+      acc[question.sectionTitle].correct += 1;
+    }
+    return acc;
+  }, {});
+  const weakestSection = Object.entries(sectionStats)
+    .map(([title, item]) => ({ title, rate: item.total ? item.correct / item.total : 1 }))
+    .sort((a, b) => a.rate - b.rate)[0];
+  const attempt = {
+    date: new Date().toLocaleString("zh-CN", { month: "2-digit", day: "2-digit", hour: "2-digit", minute: "2-digit" }),
+    score: Math.round(rawScore),
+    total: totalChoiceScore,
+    accuracy: choiceQuestions.length ? Math.round((correct.length / choiceQuestions.length) * 100) : 0,
+    writingWords,
+    weakest: weakestSection?.title || "暂无",
+  };
+  state.mockAttempts = [attempt, ...state.mockAttempts].slice(0, 6);
+  saveState();
 
   document.getElementById("mockReportBody").innerHTML = `
     <div class="report-grid">
@@ -1100,9 +1122,38 @@ function submitMockExam() {
         })
         .join("")}
     </div>
+    ${renderMockHistory()}
   `;
 
   document.getElementById("mockReport").scrollIntoView({ behavior: "smooth", block: "start" });
+}
+
+function renderMockHistory() {
+  if (!state.mockAttempts.length) {
+    return "";
+  }
+
+  const best = state.mockAttempts.reduce((max, item) => Math.max(max, item.score), 0);
+  return `
+    <div class="mock-history">
+      <h3>最近模拟记录</h3>
+      <div class="history-grid">
+        ${state.mockAttempts
+          .map(
+            (item, index) => `
+              <article class="${index === 0 ? "latest" : ""}">
+                <span>${item.date}</span>
+                <strong>${item.score}/${item.total}</strong>
+                <p>正确率 ${item.accuracy}% · 作文 ${item.writingWords} 词</p>
+                <em>薄弱项：${item.weakest}</em>
+              </article>
+            `
+          )
+          .join("")}
+      </div>
+      <p class="history-note">最高选择题得分 ${best} 分。下一轮建议优先回炉最近一次的薄弱项。</p>
+    </div>
+  `;
 }
 
 function getPracticeItem(type) {
