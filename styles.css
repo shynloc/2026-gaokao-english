@@ -1206,6 +1206,66 @@ select {
   background: var(--bg);
 }
 
+.writing-prompt-tools {
+  display: flex;
+  align-items: end;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: 16px;
+}
+
+.writing-prompt-tools label {
+  display: grid;
+  flex: 1;
+  gap: 8px;
+  color: var(--muted);
+  font-size: 13px;
+  font-weight: 800;
+}
+
+.writing-band {
+  min-height: 42px;
+  display: flex;
+  align-items: center;
+  border: 1px solid var(--line);
+  background: var(--ink);
+  color: var(--paper);
+  padding: 10px 12px;
+  font-weight: 900;
+}
+
+.writing-prompt-card {
+  margin-top: 14px;
+  padding: 18px;
+  border: 1px solid var(--line);
+  background: var(--bg);
+}
+
+.writing-prompt-card span {
+  color: var(--orange);
+  font-size: 12px;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+.writing-prompt-card h3 {
+  margin: 10px 0;
+}
+
+.writing-prompt-card p {
+  color: var(--muted);
+  line-height: 1.8;
+}
+
+.writing-prompt-card ul {
+  display: grid;
+  gap: 10px;
+  margin: 12px 0 0;
+  padding-left: 20px;
+  color: var(--muted);
+  line-height: 1.7;
+}
+
 .writing-content h3 {
   margin-bottom: 10px;
 }
@@ -1217,6 +1277,37 @@ select {
   padding-left: 20px;
   color: var(--muted);
   line-height: 1.7;
+}
+
+.writing-checklist {
+  display: grid;
+  gap: 10px;
+  margin-top: 14px;
+}
+
+.check-item {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: center;
+  gap: 10px;
+  padding: 12px;
+  border: 1px solid var(--line);
+  background: var(--bg);
+}
+
+.check-item input {
+  width: 18px;
+  height: 18px;
+  accent-color: var(--green);
+}
+
+.check-item span {
+  color: var(--muted);
+  line-height: 1.5;
+}
+
+.check-item strong {
+  color: var(--orange);
 }
 
 .chips {
@@ -1261,6 +1352,51 @@ textarea {
   margin-top: 10px;
   color: var(--muted);
   font-size: 13px;
+  font-weight: 800;
+}
+
+.draft-history {
+  margin-top: 18px;
+}
+
+.draft-history h3 {
+  margin-bottom: 12px;
+}
+
+.draft-list {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 10px;
+}
+
+.draft-list article {
+  padding: 14px;
+  border: 1px solid var(--line);
+  background: var(--bg);
+}
+
+.draft-list span {
+  color: var(--muted);
+  font-size: 13px;
+  font-weight: 800;
+}
+
+.draft-list strong {
+  display: block;
+  margin: 8px 0;
+}
+
+.draft-list p {
+  color: var(--muted);
+}
+
+.draft-list button {
+  min-height: 34px;
+  border: 1px solid var(--ink);
+  background: var(--paper);
+  color: var(--ink);
+  padding: 6px 10px;
+  cursor: pointer;
   font-weight: 800;
 }
 
@@ -1405,6 +1541,7 @@ textarea {
 
   .practice-toolbar,
   .mock-toolbar,
+  .writing-prompt-tools,
   .timer-box {
     align-items: stretch;
     flex-direction: column;
@@ -1431,6 +1568,10 @@ textarea {
   }
 
   .history-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .draft-list {
     grid-template-columns: 1fr;
   }
 

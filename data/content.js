@@ -140,4 +140,51 @@ window.E26_CONTENT = {
       output: "形成下周第一天任务清单。",
     },
   ],
+  writingLab: {
+    prompts: [
+      {
+        id: "advice",
+        type: "应用文",
+        title: "给朋友的学习建议",
+        prompt:
+          "你的英国朋友 Alex 最近准备中文演讲，来信说自己很紧张。请你写一封邮件，给出两条具体建议，并表达鼓励。",
+        target: "80-120 词",
+        mustHave: ["说明写信目的", "至少两条具体建议", "自然鼓励"],
+      },
+      {
+        id: "notice",
+        type: "应用文",
+        title: "读书分享会通知",
+        prompt:
+          "你校英语社将举办一次英文读书分享会，请你写一则通知，说明时间地点、活动内容和报名方式。",
+        target: "80 词左右",
+        mustHave: ["时间地点", "活动内容", "参与/报名方式"],
+      },
+      {
+        id: "continuation-kindness",
+        type: "读后续写",
+        title: "陌生人的善意",
+        prompt:
+          "原文情境：主角在雨中错过公交，准备放弃参加比赛。一位陌生人停下车，递来一把伞，并问他是否需要帮助。请续写接下来的情节。",
+        target: "两段续写",
+        mustHave: ["承接原文困境", "动作推动情节", "结尾回扣善意与勇气"],
+      },
+      {
+        id: "continuation-teamwork",
+        type: "读后续写",
+        title: "接力赛前的失误",
+        prompt:
+          "原文情境：接力赛前，队员发现接力棒不见了，所有人都看向负责保管的男孩。请续写他如何面对问题并解决冲突。",
+        target: "两段续写",
+        mustHave: ["人物情绪变化", "团队协作", "合理解决冲突"],
+      },
+    ],
+    checklist: [
+      { id: "task", label: "任务要点完整，没有遗漏关键信息", weight: 25 },
+      { id: "logic", label: "段落逻辑清楚，句子之间有自然衔接", weight: 20 },
+      { id: "language", label: "表达准确，基本没有影响理解的语法错误", weight: 25 },
+      { id: "specific", label: "建议、动作或情节足够具体，不空泛", weight: 20 },
+      { id: "tone", label: "语气符合文体，结尾自然克制", weight: 10 },
+    ],
+  },
 };

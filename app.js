@@ -15,6 +15,9 @@ state.mockWriting = state.mockWriting || "";
 state.mockQuestionIndex = state.mockQuestionIndex || 0;
 state.calendarDone = state.calendarDone || {};
 state.mockAttempts = state.mockAttempts || [];
+state.writingPromptId = state.writingPromptId || "";
+state.writingChecks = state.writingChecks || {};
+state.draftHistory = state.draftHistory || [];
 
 const externalContent = window.E26_CONTENT || {};
 
@@ -863,6 +866,116 @@ function renderWriting(tabName) {
   `;
 }
 
+function writingPrompts() {
+  return externalContent.writingLab?.prompts || [];
+}
+
+function writingChecklist() {
+  return externalContent.writingLab?.checklist || [];
+}
+
+function currentWritingPrompt() {
+  const prompts = writingPrompts();
+  if (!state.writingPromptId && prompts.length) {
+    state.writingPromptId = prompts[0].id;
+  }
+  return prompts.find((item) => item.id === state.writingPromptId) || prompts[0];
+}
+
+function renderWritingPromptSelect() {
+  const select = document.getElementById("writingPromptSelect");
+  select.innerHTML = writingPrompts()
+    .map((prompt) => `<option value="${prompt.id}">${prompt.type} · ${prompt.title}</option>`)
+    .join("");
+  select.value = currentWritingPrompt()?.id || "";
+}
+
+function renderWritingPrompt() {
+  const prompt = currentWritingPrompt();
+  if (!prompt) {
+    return;
+  }
+
+  document.getElementById("writingPromptCard").innerHTML = `
+    <span>${prompt.type} · ${prompt.target}</span>
+    <h3>${prompt.title}</h3>
+    <p>${prompt.prompt}</p>
+    <ul>${prompt.mustHave.map((item) => `<li>${item}</li>`).join("")}</ul>
+  `;
+}
+
+function writingScore() {
+  return writingChecklist().reduce((score, item) => score + (state.writingChecks[item.id] ? item.weight : 0), 0);
+}
+
+function renderWritingChecklist() {
+  const score = writingScore();
+  const band = score >= 85 ? "一档文" : score >= 70 ? "二档文" : score >= 55 ? "三档文" : "待打磨";
+  document.getElementById("writingBand").textContent = `自评档位：${band} · ${score}/100`;
+  document.getElementById("writingChecklist").innerHTML = writingChecklist()
+    .map(
+      (item) => `
+        <label class="check-item">
+          <input type="checkbox" data-writing-check="${item.id}" ${state.writingChecks[item.id] ? "checked" : ""} />
+          <span>${item.label}</span>
+          <strong>${item.weight}</strong>
+        </label>
+      `
+    )
+    .join("");
+
+  document.querySelectorAll("[data-writing-check]").forEach((input) => {
+    input.addEventListener("change", () => {
+      state.writingChecks[input.dataset.writingCheck] = input.checked;
+      saveState();
+      renderWritingChecklist();
+    });
+  });
+}
+
+function renderDraftHistory() {
+  const history = document.getElementById("draftHistory");
+  if (!state.draftHistory.length) {
+    history.innerHTML = "";
+    return;
+  }
+
+  history.innerHTML = `
+    <h3>草稿归档</h3>
+    <div class="draft-list">
+      ${state.draftHistory
+        .map(
+          (item, index) => `
+            <article>
+              <span>${item.date}</span>
+              <strong>${item.title}</strong>
+              <p>${item.words} words · ${item.score}/100</p>
+              <button type="button" data-load-draft="${index}">载入</button>
+            </article>
+          `
+        )
+        .join("")}
+    </div>
+  `;
+
+  document.querySelectorAll("[data-load-draft]").forEach((button) => {
+    button.addEventListener("click", () => {
+      const item = state.draftHistory[Number(button.dataset.loadDraft)];
+      state.draft = item.text;
+      document.getElementById("writingDraft").value = item.text;
+      saveState();
+      updateDraftCount();
+    });
+  });
+}
+
+function initWritingLab() {
+  renderWritingPromptSelect();
+  renderWritingPrompt();
+  renderWritingChecklist();
+  renderDraftHistory();
+}
+
 function renderVocab(filter = "") {
   const normalized = filter.trim().toLowerCase();
   document.getElementById("vocabChips").innerHTML = vocab
@@ -1383,6 +1496,12 @@ document.querySelectorAll(".tab").forEach((tab) => {
   });
 });
 
+document.getElementById("writingPromptSelect").addEventListener("change", (event) => {
+  state.writingPromptId = event.target.value;
+  saveState();
+  renderWritingPrompt();
+});
+
 document.querySelectorAll(".library-tab").forEach((tab) => {
   tab.addEventListener("click", () => {
     document.querySelectorAll(".library-tab").forEach((item) => item.classList.remove("active"));
@@ -1464,6 +1583,27 @@ document.getElementById("clearDraft").addEventListener("click", () => {
   updateDraftCount();
 });
 
+document.getElementById("saveDraft").addEventListener("click", () => {
+  const text = document.getElementById("writingDraft").value.trim();
+  const prompt = currentWritingPrompt();
+  if (!text || !prompt) {
+    return;
+  }
+
+  state.draftHistory = [
+    {
+      date: new Date().toLocaleString("zh-CN", { month: "2-digit", day: "2-digit", hour: "2-digit", minute: "2-digit" }),
+      title: prompt.title,
+      words: text.split(/\s+/).filter(Boolean).length,
+      score: writingScore(),
+      text,
+    },
+    ...state.draftHistory,
+  ].slice(0, 5);
+  saveState();
+  renderDraftHistory();
+});
+
 document.getElementById("mistakeForm").addEventListener("submit", (event) => {
   event.preventDefault();
   const title = document.getElementById("mistakeTitle");
@@ -1485,6 +1625,7 @@ renderModules();
 renderCalendar();
 renderLibrary();
 renderWriting("practical");
+initWritingLab();
 renderVocab();
 renderMistakes();
 renderPractice("reading");

@@ -227,12 +227,23 @@
             <button class="tab active" type="button" data-tab="practical">应用文</button>
             <button class="tab" type="button" data-tab="continuation">读后续写</button>
           </div>
+          <div class="writing-prompt-tools">
+            <label>
+              写作任务
+              <select id="writingPromptSelect"></select>
+            </label>
+            <div class="writing-band" id="writingBand">自评档位：--</div>
+          </div>
+          <div class="writing-prompt-card" id="writingPromptCard"></div>
           <div class="writing-content" id="writingContent"></div>
+          <div class="writing-checklist" id="writingChecklist"></div>
           <textarea id="writingDraft" rows="7" placeholder="在这里写 80-120 词草稿，页面会自动保存。"></textarea>
           <div class="draft-actions">
             <span id="draftCount">0 words</span>
+            <button type="button" id="saveDraft">归档草稿</button>
             <button type="button" id="clearDraft">清空草稿</button>
           </div>
+          <div class="draft-history" id="draftHistory"></div>
         </article>
 
         <article class="vocab-panel" id="vocab">
