@@ -331,6 +331,24 @@
           <p>Review Loop</p>
           <h2>错题回炉</h2>
         </div>
+        <div class="mistake-console">
+          <div class="mistake-summary" id="mistakeSummary"></div>
+          <div class="mistake-filters">
+            <label>
+              专项
+              <select id="mistakeTypeFilter"></select>
+            </label>
+            <label>
+              错因
+              <select id="mistakeTagFilter"></select>
+            </label>
+            <label>
+              状态
+              <select id="mistakeStatusFilter"></select>
+            </label>
+          </div>
+        </div>
+        <div class="today-review" id="todayReview"></div>
         <div class="mistake-grid" id="mistakeGrid"></div>
         <form class="mistake-form" id="mistakeForm">
           <input id="mistakeTitle" required placeholder="新增错题标签，例如：阅读主旨题误判" />

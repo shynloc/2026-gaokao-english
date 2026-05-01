@@ -25,6 +25,8 @@ state.packDone = state.packDone || {};
 state.scoreDone = state.scoreDone || {};
 state.weeklyIntensity = state.weeklyIntensity || "75";
 state.weeklyDone = state.weeklyDone || {};
+state.reviewStatus = state.reviewStatus || {};
+state.mistakeFilters = state.mistakeFilters || { type: "all", tag: "all", status: "all" };
 
 const externalContent = window.E26_CONTENT || {};
 const contentExpansion = window.E26_EXPANSION || {};
@@ -1516,6 +1518,7 @@ function renderScoreBlueprint() {
 }
 
 function moduleTitle(type) {
+  if (type === "custom") return "自定义错题";
   return modules.find((module) => module.id === type)?.title || weeklyTemplates[type]?.title || type;
 }
 
@@ -1787,42 +1790,210 @@ function renderVocab(filter = "") {
   });
 }
 
+const reviewStatusOptions = [
+  { id: "todo", label: "待复述" },
+  { id: "restated", label: "复述完成" },
+  { id: "second", label: "二刷完成" },
+  { id: "stuck", label: "仍不会" },
+];
+
+function reviewStatus(id) {
+  return state.reviewStatus[id] || "todo";
+}
+
+function statusLabel(id) {
+  return reviewStatusOptions.find((item) => item.id === id)?.label || "待复述";
+}
+
 function allMistakes() {
+  const defaultReviewMistakes = defaultMistakes.map((item, index) => {
+    const type = index === 0 ? "reading" : index === 1 ? "grammar" : "continuation";
+    return {
+      id: `default:${index}`,
+      title: item.title,
+      text: item.text,
+      type,
+      tags: defaultTagsForType(type),
+      source: "基础错题",
+    };
+  });
   const savedReviewMistakes = state.savedReviews.map((item) => ({
+    id: `saved:${item.key}`,
     title: item.title,
     text: item.text,
     type: item.type,
+    tags: reviewTags(item),
     source: "收藏回炉",
   }));
-  const manualMistakes = state.mistakes.map((item) => ({ ...item, source: "手动错题" }));
-  return [...defaultMistakes, ...savedReviewMistakes, ...manualMistakes];
+  const manualMistakes = state.mistakes.map((item, index) => ({
+    id: `manual:${index}:${item.title}`,
+    title: item.title,
+    text: item.text,
+    type: item.type || "custom",
+    tags: item.tags || [],
+    source: "手动错题",
+  }));
+  return [...defaultReviewMistakes, ...savedReviewMistakes, ...manualMistakes];
+}
+
+function filteredMistakes() {
+  state.mistakeFilters = { type: "all", tag: "all", status: "all", ...state.mistakeFilters };
+  return allMistakes().filter((item) => {
+    const status = reviewStatus(item.id);
+    const typePass = state.mistakeFilters.type === "all" || item.type === state.mistakeFilters.type;
+    const tagPass = state.mistakeFilters.tag === "all" || item.tags.includes(state.mistakeFilters.tag);
+    const statusPass = state.mistakeFilters.status === "all" || status === state.mistakeFilters.status;
+    return typePass && tagPass && statusPass;
+  });
+}
+
+function renderMistakeFilters(items) {
+  const typeFilter = document.getElementById("mistakeTypeFilter");
+  const tagFilter = document.getElementById("mistakeTagFilter");
+  const statusFilter = document.getElementById("mistakeStatusFilter");
+  const types = [...new Set(items.map((item) => item.type))].filter(Boolean);
+
+  typeFilter.innerHTML = [
+    `<option value="all">全部专项</option>`,
+    ...types.map((type) => `<option value="${type}">${moduleTitle(type)}</option>`),
+  ].join("");
+  tagFilter.innerHTML = [
+    `<option value="all">全部错因</option>`,
+    ...errorTags.map((tag) => `<option value="${tag.id}">${tag.label}</option>`),
+  ].join("");
+  statusFilter.innerHTML = [
+    `<option value="all">全部状态</option>`,
+    ...reviewStatusOptions.map((item) => `<option value="${item.id}">${item.label}</option>`),
+  ].join("");
+
+  typeFilter.value = state.mistakeFilters.type || "all";
+  tagFilter.value = state.mistakeFilters.tag || "all";
+  statusFilter.value = state.mistakeFilters.status || "all";
+
+  [typeFilter, tagFilter, statusFilter].forEach((select) => {
+    select.onchange = () => {
+      state.mistakeFilters = {
+        type: typeFilter.value,
+        tag: tagFilter.value,
+        status: statusFilter.value,
+      };
+      saveState();
+      renderMistakes();
+    };
+  });
+}
+
+function renderMistakeSummary(items) {
+  const todo = items.filter((item) => reviewStatus(item.id) === "todo").length;
+  const second = items.filter((item) => reviewStatus(item.id) === "second").length;
+  const stuck = items.filter((item) => reviewStatus(item.id) === "stuck").length;
+  document.getElementById("mistakeSummary").innerHTML = `
+    <div><span>回炉池</span><strong>${items.length}</strong></div>
+    <div><span>待复述</span><strong>${todo}</strong></div>
+    <div><span>二刷完成</span><strong>${second}</strong></div>
+    <div><span>仍不会</span><strong>${stuck}</strong></div>
+  `;
+}
+
+function todayReviewItems(items) {
+  return items
+    .filter((item) => reviewStatus(item.id) !== "second")
+    .sort((a, b) => {
+      const weight = { stuck: 0, todo: 1, restated: 2, second: 3 };
+      return weight[reviewStatus(a.id)] - weight[reviewStatus(b.id)];
+    })
+    .slice(0, 5);
+}
+
+function renderTodayReview(items) {
+  const todayItems = todayReviewItems(items);
+  document.getElementById("todayReview").innerHTML = `
+    <div>
+      <span>Today Review</span>
+      <strong>今日回炉任务</strong>
+      <p>${todayItems.length ? `优先处理 ${todayItems.length} 题：先复述错因，再二刷确认。` : "当前筛选下没有待回炉题。"}</p>
+    </div>
+    <div class="today-review-list">
+      ${
+        todayItems.length
+          ? todayItems.map((item) => `<button type="button" data-review-start="${item.id}">${moduleTitle(item.type)} · ${statusLabel(reviewStatus(item.id))}</button>`).join("")
+          : `<span>可以放宽筛选条件，或新增一条错题。</span>`
+      }
+    </div>
+  `;
 }
 
 function renderMistakes() {
-  document.getElementById("mistakeGrid").innerHTML = allMistakes()
+  const items = allMistakes();
+  const filtered = filteredMistakes();
+  renderMistakeFilters(items);
+  renderMistakeSummary(items);
+  renderTodayReview(filtered);
+
+  document.getElementById("mistakeGrid").innerHTML = filtered.length
+    ? filtered
     .map(
-      (item, index) => `
-        <article class="mistake">
+      (item) => `
+        <article class="mistake ${reviewStatus(item.id)}">
           ${item.source ? `<span>${item.source}</span>` : ""}
           <strong>${item.title}</strong>
+          <div class="mistake-meta">
+            <b>${moduleTitle(item.type)}</b>
+            <b>${statusLabel(reviewStatus(item.id))}</b>
+            ${item.tags.map((tagId) => `<b>${tagById(tagId)?.label || tagId}</b>`).join("")}
+          </div>
           <p>${item.text}</p>
-          <button type="button" data-review="${index}">今天回炉</button>
+          <div class="mistake-status" aria-label="回炉状态">
+            ${reviewStatusOptions
+              .map(
+                (status) => `
+                  <button class="${reviewStatus(item.id) === status.id ? "active" : ""}" type="button" data-review-status="${status.id}" data-review-id="${item.id}">
+                    ${status.label}
+                  </button>
+                `
+              )
+              .join("")}
+          </div>
+          <button type="button" data-review="${item.id}">今天回炉</button>
         </article>
       `
     )
-    .join("");
+    .join("")
+    : `<p class="empty-state">当前筛选下没有错题。可以切换专项、错因或状态。</p>`;
 
   document.querySelectorAll("[data-review]").forEach((button) => {
     button.addEventListener("click", () => {
-      const item = allMistakes()[Number(button.dataset.review)];
-      document.getElementById("practiceQuestion").innerHTML = `
-        <h3>错题回炉任务</h3>
-        <p>${item.title}</p>
-        <div class="answer-box show">${item.text}</div>
-      `;
-      document.getElementById("practice").scrollIntoView({ behavior: "smooth", block: "start" });
+      openMistakeReview(button.dataset.review);
     });
   });
+
+  document.querySelectorAll("[data-review-start]").forEach((button) => {
+    button.addEventListener("click", () => openMistakeReview(button.dataset.reviewStart));
+  });
+
+  document.querySelectorAll("[data-review-status]").forEach((button) => {
+    button.addEventListener("click", () => {
+      state.reviewStatus[button.dataset.reviewId] = button.dataset.reviewStatus;
+      saveState();
+      renderMistakes();
+    });
+  });
+}
+
+function openMistakeReview(id) {
+  const item = allMistakes().find((mistake) => mistake.id === id);
+  if (!item) {
+    return;
+  }
+  document.getElementById("practiceQuestion").innerHTML = `
+    <h3>错题回炉任务</h3>
+    <p>${item.title}</p>
+    <div class="answer-box show">
+      <strong>${moduleTitle(item.type)} · ${statusLabel(reviewStatus(item.id))}</strong>
+      <p>${item.text}</p>
+    </div>
+  `;
+  document.getElementById("practice").scrollIntoView({ behavior: "smooth", block: "start" });
 }
 
 let timerSeconds = 600;
