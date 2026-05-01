@@ -1375,7 +1375,7 @@ function renderPrescription() {
 
   document.getElementById("resetPack").addEventListener("click", () => {
     state.packDone[pack.id] = {};
-  saveState();
+    saveState();
     renderPrescription();
   });
 }
@@ -1788,7 +1788,14 @@ function renderVocab(filter = "") {
 }
 
 function allMistakes() {
-  return [...defaultMistakes, ...state.mistakes];
+  const savedReviewMistakes = state.savedReviews.map((item) => ({
+    title: item.title,
+    text: item.text,
+    type: item.type,
+    source: "收藏回炉",
+  }));
+  const manualMistakes = state.mistakes.map((item) => ({ ...item, source: "手动错题" }));
+  return [...defaultMistakes, ...savedReviewMistakes, ...manualMistakes];
 }
 
 function renderMistakes() {
@@ -1796,6 +1803,7 @@ function renderMistakes() {
     .map(
       (item, index) => `
         <article class="mistake">
+          ${item.source ? `<span>${item.source}</span>` : ""}
           <strong>${item.title}</strong>
           <p>${item.text}</p>
           <button type="button" data-review="${index}">今天回炉</button>
@@ -2046,7 +2054,7 @@ function renderMockQuestion() {
   document.getElementById("mockNext").disabled = state.mockQuestionIndex === questions.length - 1;
   document.getElementById("mockPrev").addEventListener("click", () => {
     state.mockQuestionIndex = Math.max(0, state.mockQuestionIndex - 1);
-  saveState();
+    saveState();
     renderMockQuestion();
   });
   document.getElementById("mockNext").addEventListener("click", () => {
@@ -2164,6 +2172,7 @@ function submitMockExam() {
 
   bindMockReportActions();
   renderReviewQueue();
+  renderMistakes();
   renderReport();
   document.getElementById("mockReport").scrollIntoView({ behavior: "smooth", block: "start" });
 }
@@ -2399,6 +2408,7 @@ function saveForReview(type, item) {
   }
   saveState();
   renderReviewQueue();
+  renderMistakes();
   renderReport();
 }
 
@@ -2599,6 +2609,7 @@ function renderReviewQueue() {
       }
       saveState();
       renderReviewQueue();
+      renderMistakes();
       renderReport();
     });
   });
@@ -2608,6 +2619,7 @@ function renderReviewQueue() {
       state.savedReviews.splice(Number(button.dataset.removeReview), 1);
       saveState();
       renderReviewQueue();
+      renderMistakes();
       renderReport();
     });
   });

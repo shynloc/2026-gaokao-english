@@ -2228,6 +2228,15 @@ textarea {
   background: var(--bg);
 }
 
+.mistake span {
+  display: inline-block;
+  margin-bottom: 8px;
+  color: var(--orange);
+  font-size: 12px;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
 .mistake strong {
   display: block;
   margin-bottom: 8px;
