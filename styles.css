@@ -1065,20 +1065,124 @@ meter {
   min-width: 220px;
 }
 
+.mock-overview {
+  display: grid;
+  gap: 12px;
+  margin-bottom: 16px;
+  padding: 14px;
+  border: 1px solid var(--line);
+  background: var(--bg);
+}
+
+.mock-overview-head {
+  display: flex;
+  align-items: end;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.mock-overview-head div {
+  display: grid;
+  gap: 5px;
+}
+
+.mock-overview-head strong {
+  font-size: 18px;
+}
+
+.mock-overview-head span,
+.mock-overview-head em {
+  color: var(--muted);
+  font-size: 13px;
+  font-style: normal;
+  font-weight: 800;
+  line-height: 1.5;
+}
+
+.mock-section-track {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.mock-section-card {
+  display: grid;
+  gap: 6px;
+  min-width: 0;
+  min-height: 108px;
+  padding: 12px;
+  border: 1px solid var(--line);
+  background: var(--paper);
+  color: var(--ink);
+  cursor: pointer;
+  text-align: left;
+}
+
+.mock-section-card.active {
+  border-color: var(--ink);
+  box-shadow: 3px 3px 0 var(--ink);
+}
+
+.mock-section-card span,
+.mock-section-card strong,
+.mock-section-card small {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.mock-section-card span {
+  font-weight: 900;
+}
+
+.mock-section-card strong,
+.mock-section-card small {
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.mock-section-card i {
+  display: block;
+  align-self: end;
+  height: 7px;
+  border: 1px solid var(--line);
+  background: linear-gradient(90deg, var(--green) var(--p), transparent 0);
+}
+
 .mock-layout {
   display: grid;
-  grid-template-columns: 112px 1fr;
+  grid-template-columns: 148px 1fr;
   gap: 14px;
 }
 
 .answer-sheet {
   display: grid;
-  grid-template-columns: repeat(2, 1fr);
+  grid-template-columns: 1fr;
   align-content: start;
   gap: 8px;
   padding: 12px;
   border: 1px solid var(--line);
   background: var(--bg);
+}
+
+.answer-sheet-group {
+  display: grid;
+  gap: 6px;
+}
+
+.answer-sheet-group span {
+  overflow: hidden;
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 900;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.answer-sheet-group div {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 6px;
 }
 
 .answer-sheet button {
@@ -1169,6 +1273,58 @@ meter {
   margin: 0;
   color: var(--muted);
   line-height: 1.65;
+}
+
+.mock-section-breakdown {
+  display: grid;
+  gap: 12px;
+  margin-top: 16px;
+}
+
+.mock-section-breakdown h3 {
+  margin: 0;
+}
+
+.section-breakdown-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.section-breakdown-grid article {
+  display: grid;
+  gap: 8px;
+  padding: 14px;
+  border: 1px solid var(--line);
+  background: var(--bg);
+}
+
+.section-breakdown-grid span {
+  color: var(--muted);
+  font-size: 13px;
+  font-weight: 900;
+}
+
+.section-breakdown-grid strong {
+  font-size: 28px;
+  line-height: 1;
+}
+
+.section-breakdown-grid p {
+  margin: 0;
+  color: var(--muted);
+  line-height: 1.6;
+}
+
+.section-breakdown-grid button {
+  justify-self: start;
+  min-height: 34px;
+  border: 1px solid var(--ink);
+  background: var(--paper);
+  color: var(--ink);
+  padding: 7px 12px;
+  cursor: pointer;
+  font-weight: 900;
 }
 
 .mock-history {
@@ -2567,6 +2723,10 @@ textarea {
     grid-template-columns: 1fr;
   }
 
+  .mock-section-track {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
   .practice-insight {
     grid-template-columns: 1fr;
   }
@@ -2639,7 +2799,21 @@ textarea {
     grid-template-columns: 1fr;
   }
 
+  .mock-overview-head {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .mock-section-track,
+  .section-breakdown-grid {
+    grid-template-columns: 1fr;
+  }
+
   .answer-sheet {
+    grid-template-columns: 1fr;
+  }
+
+  .answer-sheet-group div {
     grid-template-columns: repeat(4, 1fr);
   }
 

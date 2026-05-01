@@ -2181,7 +2181,19 @@ function mockQuestions() {
 
   return exam.sections.flatMap((section) => {
     if (section.writing) {
-      return [{ ...section, id: `${exam.id}:${section.id}:writing`, type: "writing", sectionTitle: section.title, examId: exam.id }];
+      return [
+        {
+          ...section,
+          id: `${exam.id}:${section.id}:writing`,
+          type: "writing",
+          score: section.score,
+          sectionTitle: section.title,
+          sectionId: section.id,
+          examId: exam.id,
+          practiceType: practiceTypeForSection(section.id),
+          localNo: 1,
+        },
+      ];
     }
 
     return section.questions.map((question, index) => ({
@@ -2194,6 +2206,61 @@ function mockQuestions() {
       practiceType: practiceTypeForSection(section.id),
       localNo: index + 1,
     }));
+  });
+}
+
+const mockSectionMinuteWeights = {
+  listening: 18,
+  reading: 18,
+  seven: 9,
+  cloze: 10,
+  grammar: 9,
+  practical: 14,
+  continuation: 18,
+  vocab: 8,
+};
+
+function isMockQuestionAnswered(question) {
+  return question.type === "writing" ? Boolean(mockWritingValue().trim()) : state.mockAnswers[question.id] !== undefined;
+}
+
+function estimateMockSectionMinutes(section, exam) {
+  if (section.minutes) {
+    return section.minutes;
+  }
+
+  const sectionType = practiceTypeForSection(section.id);
+  const base = mockSectionMinuteWeights[sectionType] || 10;
+  const totalBase = exam.sections.reduce((sum, item) => {
+    const type = practiceTypeForSection(item.id);
+    return sum + (mockSectionMinuteWeights[type] || 10);
+  }, 0);
+
+  return Math.max(4, Math.round(((exam.duration || totalBase || 45) * base) / totalBase));
+}
+
+function mockSectionPlans() {
+  const exam = currentMockExam();
+  const questions = mockQuestions();
+  if (!exam) {
+    return [];
+  }
+
+  return exam.sections.map((section) => {
+    const sectionQuestions = questions.filter((question) => question.sectionId === section.id);
+    const firstIndex = questions.findIndex((question) => question.sectionId === section.id);
+    const answered = sectionQuestions.filter(isMockQuestionAnswered).length;
+    return {
+      id: section.id,
+      title: section.title,
+      score: section.score,
+      minutes: estimateMockSectionMinutes(section, exam),
+      questions: sectionQuestions,
+      firstIndex: Math.max(0, firstIndex),
+      answered,
+      total: sectionQuestions.length,
+      type: practiceTypeForSection(section.id),
+    };
   });
 }
 
@@ -2235,15 +2302,76 @@ function resetActiveMockExam() {
   renderMockStoredReport();
 }
 
-function renderAnswerSheet() {
+function renderMockOverview() {
+  const exam = currentMockExam();
+  const overview = document.getElementById("mockOverview");
+  if (!exam || !overview) {
+    return;
+  }
+
   const questions = mockQuestions();
-  document.getElementById("answerSheet").innerHTML = questions
-    .map((question, index) => {
-      const answered = question.type === "writing" ? mockWritingValue().trim() : state.mockAnswers[question.id] !== undefined;
+  const plans = mockSectionPlans();
+  const answered = questions.filter(isMockQuestionAnswered).length;
+  const totalScore = plans.reduce((sum, section) => sum + (section.score || 0), 0);
+  const currentQuestion = questions[state.mockQuestionIndex];
+  overview.innerHTML = `
+    <div class="mock-overview-head">
+      <div>
+        <strong>卷面结构</strong>
+        <span>${exam.duration || 45} 分钟 · ${totalScore} 分 · ${answered}/${questions.length} 已完成</span>
+      </div>
+      <em>${exam.description || "按题型分段推进，交卷后生成分项报告。"}</em>
+    </div>
+    <div class="mock-section-track">
+      ${plans
+        .map((section) => {
+          const progress = section.total ? Math.round((section.answered / section.total) * 100) : 0;
+          const active = currentQuestion?.sectionId === section.id;
+          return `
+            <button class="mock-section-card ${active ? "active" : ""}" type="button" data-mock-section-jump="${section.firstIndex}">
+              <span>${section.title}</span>
+              <strong>${section.score || 0} 分 · ${section.minutes} 分钟</strong>
+              <small>${section.answered}/${section.total} 题完成</small>
+              <i style="--p:${progress}%"></i>
+            </button>
+          `;
+        })
+        .join("")}
+    </div>
+  `;
+
+  document.querySelectorAll("[data-mock-section-jump]").forEach((button) => {
+    button.addEventListener("click", () => {
+      state.mockQuestionIndex = Number(button.dataset.mockSectionJump);
+      saveState();
+      renderMockQuestion();
+    });
+  });
+}
+
+function renderAnswerSheet() {
+  const plans = mockSectionPlans();
+  const questions = mockQuestions();
+  let globalNo = 0;
+  document.getElementById("answerSheet").innerHTML = plans
+    .map((section) => {
+      const buttons = section.questions
+        .map((question) => {
+          const index = questions.findIndex((item) => item.id === question.id);
+          const answered = isMockQuestionAnswered(question);
+          globalNo += 1;
+          return `
+            <button class="${index === state.mockQuestionIndex ? "active" : ""} ${answered ? "answered" : ""}" type="button" data-mock-jump="${index}">
+              ${question.type === "writing" ? "写" : globalNo}
+            </button>
+          `;
+        })
+        .join("");
       return `
-        <button class="${index === state.mockQuestionIndex ? "active" : ""} ${answered ? "answered" : ""}" type="button" data-mock-jump="${index}">
-          ${index + 1}
-        </button>
+        <div class="answer-sheet-group">
+          <span>${section.title}</span>
+          <div>${buttons}</div>
+        </div>
       `;
     })
     .join("");
@@ -2286,6 +2414,7 @@ function renderMockQuestion() {
     document.getElementById("mockWriting").addEventListener("input", (event) => {
       setMockWritingValue(event.target.value);
       saveState();
+      renderMockOverview();
       renderAnswerSheet();
     });
   } else {
@@ -2335,6 +2464,7 @@ function renderMockQuestion() {
     renderMockQuestion();
   });
 
+  renderMockOverview();
   renderAnswerSheet();
 }
 
@@ -2365,6 +2495,56 @@ function saveMockWrongAnswers(choiceQuestions) {
   return added;
 }
 
+function buildMockSectionBreakdown(choiceQuestions) {
+  return mockSectionPlans().map((section) => {
+    const sectionChoices = choiceQuestions.filter((question) => question.sectionId === section.id);
+    const correct = sectionChoices.filter((question) => state.mockAnswers[question.id] === question.answer);
+    const earned = correct.reduce((sum, question) => sum + question.score, 0);
+    const choiceScore = sectionChoices.reduce((sum, question) => sum + question.score, 0);
+    return {
+      title: section.title,
+      type: section.type,
+      score: section.score,
+      choiceScore,
+      earned,
+      correct: correct.length,
+      total: sectionChoices.length,
+      answered: section.answered,
+      count: section.total,
+      writing: section.questions.some((question) => question.type === "writing"),
+    };
+  });
+}
+
+function renderMockSectionBreakdown(sectionBreakdown = []) {
+  if (!sectionBreakdown.length) {
+    return "";
+  }
+
+  return `
+    <div class="mock-section-breakdown">
+      <h3>分项表现</h3>
+      <div class="section-breakdown-grid">
+        ${sectionBreakdown
+          .map((section) => {
+            const rate = section.total ? Math.round((section.correct / section.total) * 100) : section.writing ? null : 0;
+            const earned = Number.isInteger(section.earned) ? section.earned : Number(section.earned.toFixed(1));
+            const choiceScore = Number.isInteger(section.choiceScore) ? section.choiceScore : Number(section.choiceScore.toFixed(1));
+            return `
+              <article>
+                <span>${section.title}</span>
+                <strong>${section.writing ? `${section.answered}/${section.count} 已写` : `${rate}%`}</strong>
+                <p>${section.writing ? `${section.score || 0} 分写作任务，按清单自评。` : `${section.correct}/${section.total} 题 · ${earned}/${choiceScore} 分`}</p>
+                <button type="button" data-mock-trend-practice="${section.type}">回练</button>
+              </article>
+            `;
+          })
+          .join("")}
+      </div>
+    </div>
+  `;
+}
+
 function submitMockExam() {
   const exam = currentMockExam();
   const questions = mockQuestions();
@@ -2375,16 +2555,10 @@ function submitMockExam() {
   const writingWords = writingDraft.trim() ? writingDraft.trim().split(/\s+/).length : 0;
   const rawScore = correct.reduce((sum, question) => sum + question.score, 0);
   const totalChoiceScore = choiceQuestions.reduce((sum, question) => sum + question.score, 0);
-  const sectionStats = choiceQuestions.reduce((acc, question) => {
-    acc[question.sectionTitle] = acc[question.sectionTitle] || { total: 0, correct: 0, type: question.practiceType };
-    acc[question.sectionTitle].total += 1;
-    if (state.mockAnswers[question.id] === question.answer) {
-      acc[question.sectionTitle].correct += 1;
-    }
-    return acc;
-  }, {});
-  const weakestSection = Object.entries(sectionStats)
-    .map(([title, item]) => ({ title, type: item.type, rate: item.total ? item.correct / item.total : 1 }))
+  const sectionBreakdown = buildMockSectionBreakdown(choiceQuestions);
+  const weakestSection = sectionBreakdown
+    .filter((section) => section.total)
+    .map((section) => ({ title: section.title, type: section.type, rate: section.total ? section.correct / section.total : 1 }))
     .sort((a, b) => a.rate - b.rate)[0];
   const attempt = {
     date: new Date().toLocaleString("zh-CN", { month: "2-digit", day: "2-digit", hour: "2-digit", minute: "2-digit" }),
@@ -2396,6 +2570,7 @@ function submitMockExam() {
     writingWords,
     weakest: weakestSection?.title || "暂无",
     weakestType: weakestSection?.type || "reading",
+    sectionBreakdown,
   };
   const addedReviews = saveMockWrongAnswers(choiceQuestions);
   state.mockAttempts = [attempt, ...state.mockAttempts].slice(0, 6);
@@ -2424,6 +2599,7 @@ function submitMockExam() {
       <strong>${exam.title}</strong>
       <p>本次未答或答错的选择题已自动进入收藏回炉，并带上错因标签，可在学习报告和周计划中继续联动。</p>
     </div>
+    ${renderMockSectionBreakdown(sectionBreakdown)}
     <div class="mock-review-list">
       ${choiceQuestions
         .map((question, index) => {
@@ -2508,6 +2684,7 @@ function renderMockStoredReport() {
         <p>${latest.examTitle || "微型模拟卷"} · ${latest.date}</p>
       </div>
     </div>
+    ${renderMockSectionBreakdown(latest.sectionBreakdown)}
     ${renderMockHistory()}
   `;
   bindMockReportActions();
