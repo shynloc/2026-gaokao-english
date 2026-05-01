@@ -872,7 +872,11 @@ const errorTags = [
   { id: "source", label: "原文回扣", type: "continuation", action: "从原文最后一段找物件、承诺、冲突或人物关系作为续写锚点。" },
   { id: "action-chain", label: "动作链不足", type: "continuation", action: "用连续动作推动情节，不只写人物感受或主题句。" },
   { id: "collocation", label: "搭配不准", type: "vocab", action: "把词块放进完整句子，重点检查动词和抽象名词搭配。" },
+  { id: "word-choice", label: "词义误判", type: "vocab", action: "先看主题和搭配对象，再判断动词、名词或形容词是否自然。" },
+  { id: "word-transfer", label: "迁移不足", type: "vocab", action: "把词块换到另一类作文主题中造句，避免只会认不会用。" },
   { id: "signal", label: "漏听信号", type: "listening", action: "重听转折、否定、比较、时间和数字变化处。" },
+  { id: "number", label: "数字变化", type: "listening", action: "记录原始数字和变化词，再做一次加减或时间换算。" },
+  { id: "speaker", label: "关系场景", type: "listening", action: "优先抓称呼、地点名词、职业动作和语气角色。" },
 ];
 
 const defaultErrorTagsByType = {
@@ -882,8 +886,8 @@ const defaultErrorTagsByType = {
   grammar: ["predicate", "wordform"],
   practical: ["task", "tone"],
   continuation: ["plot", "source"],
-  vocab: ["collocation"],
-  listening: ["signal"],
+  vocab: ["collocation", "word-transfer"],
+  listening: ["signal", "number"],
 };
 
 const weeklyTemplates = {
