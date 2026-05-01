@@ -1147,6 +1147,233 @@ const builtInMockExams = [
       },
     ],
   },
+  {
+    id: "final-sprint-mixed",
+    title: "综合压轴微型卷",
+    description: "模拟临场综合切换：听力信号、阅读定位、七选五逻辑、完形语境和写作任务并行检测。",
+    duration: 58,
+    sections: [
+      {
+        id: "listening",
+        title: "听力信号",
+        score: 12,
+        minutes: 9,
+        questions: [
+          {
+            id: "fs-l1",
+            prompt:
+              "W: The workshop starts at 3:30, right? M: It was moved to 4:15 because the speaker's train was late. We still need to arrive ten minutes early.",
+            question: "When should they arrive?",
+            options: ["3:20", "3:30", "4:05", "4:15"],
+            answer: 2,
+            explain: "workshop 改到 4:15，但 still need to arrive ten minutes early，所以到达时间是 4:05。",
+          },
+          {
+            id: "fs-l2",
+            prompt:
+              "M: I thought the science show would be boring. W: Me too, but the part about clean energy was surprisingly clear. The experiments made the ideas easy to understand.",
+            question: "What is the woman's attitude toward the show?",
+            options: ["Disappointed", "Interested", "Worried", "Uncertain"],
+            answer: 1,
+            explain: "but 后的 surprisingly clear 和 easy to understand 是态度转折后的答案落点。",
+          },
+        ],
+      },
+      {
+        id: "reading",
+        title: "阅读理解",
+        score: 24,
+        minutes: 16,
+        questions: [
+          {
+            id: "fs-r1",
+            prompt:
+              "At a coastal school, students built small sensors to measure the temperature of sand and water. The data helped local researchers decide where to place signs warning visitors about hot surfaces in summer.",
+            question: "What did the students' project help researchers do?",
+            options: ["Choose safer places for warning signs", "Stop visitors from going to the beach", "Measure classroom temperatures", "Sell sensors to tourists"],
+            answer: 0,
+            explain: "decide where to place signs warning visitors 对应 choose safer places for warning signs。",
+          },
+          {
+            id: "fs-r2",
+            prompt:
+              "The community kitchen does not simply give meals away. Volunteers also teach families how to plan weekly menus, store vegetables properly, and use leftovers creatively.",
+            question: "What is the main purpose of the kitchen?",
+            options: ["To provide both food and practical skills", "To close local markets", "To train professional chefs only", "To stop people from cooking at home"],
+            answer: 0,
+            explain: "not simply give meals away 后面列出 plan, store, use leftovers，说明既提供食物也提供实用技能。",
+          },
+          {
+            id: "fs-r3",
+            prompt:
+              "Many apps promise to improve focus, yet teachers found that the most effective change was a simple rule: students placed their phones in a box before group work and collected them afterwards.",
+            question: "What does the text suggest about improving focus?",
+            options: ["A simple rule can work better than extra apps", "Students should use more focus apps", "Group work requires phones", "Teachers should avoid all rules"],
+            answer: 0,
+            explain: "yet 后出现真正结论：the most effective change was a simple rule。",
+          },
+        ],
+      },
+      {
+        id: "gap",
+        title: "七选五",
+        score: 12,
+        minutes: 8,
+        questions: [
+          {
+            id: "fs-g1",
+            prompt:
+              "When preparing for an important test, students often look for new materials. ______ Reusing old mistakes carefully may bring a bigger improvement than starting another thick exercise book.",
+            question: "选择最适合的句子填入空格。",
+            options: ["However, the best resource may already be in their notebooks.", "Every book has the same cover.", "Tests never require review.", "Students should avoid their notebooks."],
+            answer: 0,
+            explain: "后文 Reusing old mistakes 与 old notebooks 呼应，且和 look for new materials 构成转折。",
+          },
+          {
+            id: "fs-g2",
+            prompt:
+              "A short presentation is easier to follow when it has one clear message. ______ Otherwise, listeners may remember the examples but miss the point.",
+            question: "选择最适合的句子填入空格。",
+            options: ["Each example should serve that message.", "The speaker should hide the topic.", "Longer slides are always better.", "Listeners dislike clear examples."],
+            answer: 0,
+            explain: "Otherwise 后说 examples 和 point 脱节，空格应说明例子要服务中心信息。",
+          },
+        ],
+      },
+      {
+        id: "cloze",
+        title: "完形语境",
+        score: 12,
+        minutes: 10,
+        questions: [
+          {
+            id: "fs-c1",
+            prompt:
+              "Mia was nervous before the volunteer interview, but she remembered the elderly people she hoped to help. The thought made her voice become ______.",
+            question: "选择最符合上下文的词。",
+            options: ["steadier", "louder", "stranger", "colder"],
+            answer: 0,
+            explain: "nervous 到 remembered the elderly people she hoped to help，情绪变稳定，steadier 最贴合。",
+          },
+          {
+            id: "fs-c2",
+            prompt:
+              "The first plan failed because the boxes were too heavy. Instead of complaining, the team quickly ______ the work and asked two more students to join.",
+            question: "选择最符合上下文的词。",
+            options: ["reorganized", "forgot", "hid", "cancelled"],
+            answer: 0,
+            explain: "failed 后 quickly 调整分工并增加人手，reorganized 符合解决问题的语境线。",
+          },
+        ],
+      },
+      {
+        id: "writing",
+        title: "写作任务",
+        score: 20,
+        minutes: 15,
+        writing: true,
+        prompt:
+          "假定你是李华，你校英文网站正在征集“考前最后一周如何高效复盘”的短文。请写一段 80-120 词的英文稿，内容包括：1. 一个具体复盘方法；2. 为什么有效；3. 给同学的一句提醒。",
+        rubric: ["方法具体可执行", "理由和方法对应", "语气适合校内分享", "结尾提醒克制有力"],
+      },
+    ],
+  },
+  {
+    id: "last-week-warmup",
+    title: "临考保温微型卷",
+    description: "用于考前最后一周保手感：题目难度温和，重点检查审题、证据、语境和稳定输出。",
+    duration: 46,
+    sections: [
+      {
+        id: "reading",
+        title: "阅读保温",
+        score: 20,
+        minutes: 14,
+        questions: [
+          {
+            id: "lw-r1",
+            prompt:
+              "A village bookstore invites local grandparents to tell stories on Friday evenings. Children listen, ask questions, and later draw pictures based on what they heard.",
+            question: "What makes the bookstore activity special?",
+            options: ["It connects children with older storytellers", "It sells drawings online", "It takes place every morning", "It asks children to read silently only"],
+            answer: 0,
+            explain: "grandparents tell stories, children listen and ask questions，核心是代际故事连接。",
+          },
+          {
+            id: "lw-r2",
+            prompt:
+              "The new bike lane is separated from cars by a row of plants. City planners hope this design will make cycling feel safer and also add more green space to the street.",
+            question: "Why are plants used in the bike lane design?",
+            options: ["To improve safety and the street environment", "To block all cyclists", "To reduce the number of streets", "To make cars drive in the bike lane"],
+            answer: 0,
+            explain: "make cycling feel safer 和 add more green space 分别对应安全和环境。",
+          },
+        ],
+      },
+      {
+        id: "grammar",
+        title: "语法保温",
+        score: 16,
+        minutes: 8,
+        questions: [
+          {
+            id: "lw-gr1",
+            prompt:
+              "The photos ______ (take) during the school trip will be shown at the art festival.",
+            question: "选择括号内单词的正确形式。",
+            options: ["taking", "taken", "to take", "took"],
+            answer: 1,
+            explain: "photos 与 take 是被动关系，且句子已有谓语 will be shown，因此用过去分词 taken 作后置定语。",
+          },
+          {
+            id: "lw-gr2",
+            prompt:
+              "Reading aloud for ten minutes every day ______ (help) many students build confidence.",
+            question: "选择括号内单词的正确形式。",
+            options: ["help", "helps", "helping", "to help"],
+            answer: 1,
+            explain: "主语是 Reading aloud... 这一件事，谓语用第三人称单数 helps。",
+          },
+        ],
+      },
+      {
+        id: "vocab",
+        title: "词块保温",
+        score: 12,
+        minutes: 8,
+        questions: [
+          {
+            id: "lw-v1",
+            prompt:
+              "主题：校园活动。目标：表达“这个活动拓宽了我的视野”。",
+            question: "Which expression is the most natural?",
+            options: ["broadened my horizons", "made my eyes wider", "opened my seeing", "changed my view color"],
+            answer: 0,
+            explain: "broaden one's horizons 是表达“拓宽视野”的自然词块。",
+          },
+          {
+            id: "lw-v2",
+            prompt:
+              "主题：互助合作。目标：表达“共同努力解决问题”。",
+            question: "Which expression is the most natural?",
+            options: ["work together to solve the problem", "work same to delete the problem", "make the problem away", "solve together the hard"],
+            answer: 0,
+            explain: "work together to solve the problem 搭配自然，能直接迁移到应用文和续写。",
+          },
+        ],
+      },
+      {
+        id: "writing",
+        title: "写作任务",
+        score: 20,
+        minutes: 16,
+        writing: true,
+        prompt:
+          "假定你是李华，你校英语社将举办一次考前放松活动，请你写一则英文通知，内容包括：1. 活动时间和地点；2. 活动内容；3. 欢迎同学参加。词数 80 左右。",
+        rubric: ["通知要素完整", "时间地点清楚", "活动内容具体", "语气简洁自然"],
+      },
+    ],
+  },
 ];
 
 function updateProgress() {
