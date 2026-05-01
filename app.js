@@ -1688,7 +1688,38 @@ function writingPrompts() {
 }
 
 function writingChecklist() {
-  return externalContent.writingLab?.checklist || [];
+  const mode = currentWritingMode();
+  const rubrics = {
+    practical: [
+      { id: "practical-task", label: "任务完整", detail: "对象、目的、必要信息没有遗漏。", weight: 24, issue: "先补齐写信对象、活动信息或请求目的。", advice: "用 1 句话复述题干要求，再逐项核对正文。" },
+      { id: "practical-tone", label: "语气得体", detail: "邀请、建议、通知、道歉等语气符合场景。", weight: 18, issue: "语气偏空泛或不够礼貌。", advice: "补一个 I would appreciate it if... / I am sorry that... 等功能句。" },
+      { id: "practical-specific", label: "信息密度", detail: "建议、安排或说明具体可执行。", weight: 22, issue: "主体段缺少具体动作或频率。", advice: "把 vague advice 改成方法 + 时间/频率 + 预期效果。" },
+      { id: "practical-language", label: "语言准确", detail: "时态、搭配、单复数基本稳定。", weight: 22, issue: "语言错误可能影响理解。", advice: "优先检查谓语动词、名词单复数和固定搭配。" },
+      { id: "practical-structure", label: "结构清楚", detail: "开头、主体、结尾分工明确。", weight: 14, issue: "段落功能不够清楚。", advice: "按目的句、主体信息、礼貌收束三步重排。" },
+    ],
+    continuation: [
+      { id: "continuation-plot", label: "情节合理", detail: "没有突然跳时间、换人物或强行升华。", weight: 24, issue: "情节推进有跳跃。", advice: "补一个动作节点，让人物先做一件可见的事。" },
+      { id: "continuation-source", label: "原文回扣", detail: "关键物件、人物关系或冲突来自原文。", weight: 20, issue: "续写和原文连接偏弱。", advice: "找原文最后一段的物件、情绪或承诺，写进第一段。" },
+      { id: "continuation-action", label: "动作描写", detail: "用动作推动情节，而不是只写感受。", weight: 18, issue: "动作链不足，画面感偏弱。", advice: "连续写 2-3 个小动作，再接一句结果。" },
+      { id: "continuation-emotion", label: "情绪变化", detail: "人物情绪有起点、变化和原因。", weight: 18, issue: "情绪表达直白或没有变化。", advice: "把 sad / nervous 改成声音、眼神、停顿等细节。" },
+      { id: "continuation-language", label: "语言准确", detail: "句式自然，叙事时态稳定。", weight: 20, issue: "语言错误会削弱叙事连贯。", advice: "统一过去时，检查代词指代和非谓语结构。" },
+    ],
+  };
+  return rubrics[mode] || externalContent.writingLab?.checklist || [];
+}
+
+function promptMode(prompt = currentWritingPrompt()) {
+  if (!prompt) return "practical";
+  return prompt.id?.startsWith("continuation") || prompt.type?.includes("续写") ? "continuation" : "practical";
+}
+
+function currentWritingMode() {
+  return promptMode(currentWritingPrompt());
+}
+
+function setActiveWritingTab(mode) {
+  document.querySelectorAll(".tab").forEach((tab) => tab.classList.toggle("active", tab.dataset.tab === mode));
+  renderWriting(mode);
 }
 
 function currentWritingPrompt() {
@@ -1712,6 +1743,7 @@ function renderWritingPrompt() {
   if (!prompt) {
     return;
   }
+  setActiveWritingTab(promptMode(prompt));
 
   document.getElementById("writingPromptCard").innerHTML = `
     <span>${prompt.type} · ${prompt.target}</span>
@@ -1721,25 +1753,56 @@ function renderWritingPrompt() {
   `;
 }
 
+function writingScoreDetail() {
+  const checklist = writingChecklist();
+  const score = checklist.reduce((sum, item) => sum + (state.writingChecks[item.id] ? item.weight : 0), 0);
+  const missing = checklist.filter((item) => !state.writingChecks[item.id]);
+  const passed = checklist.filter((item) => state.writingChecks[item.id]);
+  const band = score >= 88 ? "高分冲刺" : score >= 76 ? "稳分可交" : score >= 60 ? "保底成形" : "需要重写";
+  const next = missing[0]?.advice || "保留当前结构，最后检查拼写、标点和卷面。";
+  return { score, missing, passed, band, next };
+}
+
 function writingScore() {
-  return writingChecklist().reduce((score, item) => score + (state.writingChecks[item.id] ? item.weight : 0), 0);
+  return writingScoreDetail().score;
 }
 
 function renderWritingChecklist() {
-  const score = writingScore();
-  const band = score >= 85 ? "一档文" : score >= 70 ? "二档文" : score >= 55 ? "三档文" : "待打磨";
-  document.getElementById("writingBand").textContent = `自评档位：${band} · ${score}/100`;
+  const detail = writingScoreDetail();
+  document.getElementById("writingBand").textContent = `自评档位：${detail.band} · ${detail.score}/100`;
   document.getElementById("writingChecklist").innerHTML = writingChecklist()
     .map(
       (item) => `
         <label class="check-item">
           <input type="checkbox" data-writing-check="${item.id}" ${state.writingChecks[item.id] ? "checked" : ""} />
-          <span>${item.label}</span>
+          <span><strong>${item.label}</strong>${item.detail}</span>
           <strong>${item.weight}</strong>
         </label>
       `
     )
     .join("");
+  document.getElementById("writingDiagnosis").innerHTML = `
+    <div class="diagnosis-score">
+      <span>${currentWritingMode() === "continuation" ? "Continuation" : "Practical"}</span>
+      <strong>${detail.score}</strong>
+      <p>${detail.band}</p>
+    </div>
+    <div class="diagnosis-list">
+      <h3>扣分提醒</h3>
+      ${
+        detail.missing.length
+          ? detail.missing
+              .slice(0, 3)
+              .map((item) => `<article><span>${item.label}</span><p>${item.issue}</p></article>`)
+              .join("")
+          : `<article><span>可以提交</span><p>核心维度已覆盖，最后检查拼写、标点和卷面。</p></article>`
+      }
+    </div>
+    <div class="diagnosis-list">
+      <h3>下一步修改</h3>
+      <article><span>Rewrite Move</span><p>${detail.next}</p></article>
+    </div>
+  `;
 
   document.querySelectorAll("[data-writing-check]").forEach((input) => {
     input.addEventListener("change", () => {
@@ -1766,7 +1829,8 @@ function renderDraftHistory() {
             <article>
               <span>${item.date}</span>
               <strong>${item.title}</strong>
-              <p>${item.words} words · ${item.score}/100</p>
+              <p>${item.words} words · ${item.score}/100 · ${item.band || "未记录档位"}</p>
+              ${item.issues?.length ? `<p>待改：${item.issues.slice(0, 2).join(" / ")}</p>` : ""}
               <button type="button" data-load-draft="${index}">载入</button>
             </article>
           `
@@ -1778,6 +1842,12 @@ function renderDraftHistory() {
   document.querySelectorAll("[data-load-draft]").forEach((button) => {
     button.addEventListener("click", () => {
       const item = state.draftHistory[Number(button.dataset.loadDraft)];
+      if (item.promptId) {
+        state.writingPromptId = item.promptId;
+        renderWritingPromptSelect();
+        renderWritingPrompt();
+        renderWritingChecklist();
+      }
       state.draft = item.text;
       document.getElementById("writingDraft").value = item.text;
       saveState();
@@ -2924,9 +2994,16 @@ document.querySelectorAll("[data-plan]").forEach((button) => {
 
 document.querySelectorAll(".tab").forEach((tab) => {
   tab.addEventListener("click", () => {
-    document.querySelectorAll(".tab").forEach((item) => item.classList.remove("active"));
-    tab.classList.add("active");
-    renderWriting(tab.dataset.tab);
+    const prompt = writingPrompts().find((item) => promptMode(item) === tab.dataset.tab);
+    if (prompt) {
+      state.writingPromptId = prompt.id;
+      saveState();
+      renderWritingPromptSelect();
+      renderWritingPrompt();
+      renderWritingChecklist();
+    } else {
+      setActiveWritingTab(tab.dataset.tab);
+    }
   });
 });
 
@@ -2934,6 +3011,7 @@ document.getElementById("writingPromptSelect").addEventListener("change", (event
   state.writingPromptId = event.target.value;
   saveState();
   renderWritingPrompt();
+  renderWritingChecklist();
 });
 
 document.querySelectorAll(".library-tab").forEach((tab) => {
@@ -3037,12 +3115,18 @@ document.getElementById("saveDraft").addEventListener("click", () => {
     return;
   }
 
+  const scoreDetail = writingScoreDetail();
   state.draftHistory = [
     {
       date: new Date().toLocaleString("zh-CN", { month: "2-digit", day: "2-digit", hour: "2-digit", minute: "2-digit" }),
       title: prompt.title,
+      promptId: prompt.id,
+      mode: currentWritingMode(),
       words: text.split(/\s+/).filter(Boolean).length,
-      score: writingScore(),
+      score: scoreDetail.score,
+      band: scoreDetail.band,
+      issues: scoreDetail.missing.map((item) => item.label),
+      next: scoreDetail.next,
       text,
     },
     ...state.draftHistory,
