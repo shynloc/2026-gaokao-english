@@ -866,7 +866,11 @@ const errorTags = [
   { id: "predicate", label: "谓语判断", type: "grammar", action: "先数谓语动词，再判定动词空是谓语还是非谓语。" },
   { id: "wordform", label: "词性转换", type: "grammar", action: "看空格修饰对象，确定名词、形容词、副词或动名词。" },
   { id: "task", label: "任务要点", type: "practical", action: "写前圈出对象、目的、必要信息，写后逐项核对。" },
+  { id: "tone", label: "语气文体", type: "practical", action: "判断是邀请、建议、通知、申请还是道歉，先定语气再写内容。" },
+  { id: "specific-info", label: "信息空泛", type: "practical", action: "把泛泛表达改成时间、地点、动作、频率或补救办法。" },
   { id: "plot", label: "情节跳跃", type: "continuation", action: "补一个动作节点、一个情绪变化和一个原文细节回扣。" },
+  { id: "source", label: "原文回扣", type: "continuation", action: "从原文最后一段找物件、承诺、冲突或人物关系作为续写锚点。" },
+  { id: "action-chain", label: "动作链不足", type: "continuation", action: "用连续动作推动情节，不只写人物感受或主题句。" },
   { id: "collocation", label: "搭配不准", type: "vocab", action: "把词块放进完整句子，重点检查动词和抽象名词搭配。" },
   { id: "signal", label: "漏听信号", type: "listening", action: "重听转折、否定、比较、时间和数字变化处。" },
 ];
@@ -876,8 +880,8 @@ const defaultErrorTagsByType = {
   seven: ["logic"],
   cloze: ["context"],
   grammar: ["predicate", "wordform"],
-  practical: ["task"],
-  continuation: ["plot"],
+  practical: ["task", "tone"],
+  continuation: ["plot", "source"],
   vocab: ["collocation"],
   listening: ["signal"],
 };
