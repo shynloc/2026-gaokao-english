@@ -1523,6 +1523,7 @@ function moduleTitle(type) {
 }
 
 function weeklyPriorityTypes() {
+  const fromReviewPressure = reviewPressureStats().map((item) => item.type);
   const fromTags = errorTagStats().map((tag) => tag.type);
   const fromStats = modules
     .map((module) => {
@@ -1535,7 +1536,7 @@ function weeklyPriorityTypes() {
   const target = Number(state.targetScore) || 125;
   const defaults = target >= 135 ? ["reading", "continuation", "grammar", "listening"] : target < 110 ? ["vocab", "grammar", "practical", "reading"] : ["reading", "grammar", "continuation", "listening"];
 
-  return [...new Set([...fromTags, ...fromStats, ...defaults])].filter((type) => weeklyTemplates[type]);
+  return [...new Set([...fromReviewPressure, ...fromTags, ...fromStats, ...defaults])].filter((type) => weeklyTemplates[type]);
 }
 
 function weeklyPlan() {
@@ -1578,6 +1579,7 @@ function renderWeeklyPlan() {
   const plan = weeklyPlan();
   const priority = weeklyPriorityTypes();
   const tagStats = errorTagStats();
+  const pressureStats = reviewPressureStats();
   const doneCount = plan.filter((day) => state.weeklyDone[day.day]).length;
   const target = Number(state.targetScore) || 125;
 
@@ -1615,10 +1617,30 @@ function renderWeeklyPlan() {
       <span>目标 ${target} 分 · 剩余 ${daysLeft} 天</span>
       <strong>${doneCount}/7</strong>
       <p>本周优先顺序：${priority.slice(0, 4).map(moduleTitle).join(" / ")}</p>
+      ${
+        pressureStats.length
+          ? `<p>回炉压力最高：${pressureStats
+              .slice(0, 2)
+              .map((item) => `${moduleTitle(item.type)} ${item.score}`)
+              .join(" / ")}</p>`
+          : ""
+      }
     </div>
     <div class="weekly-reason-list">
       ${
-        tagStats.length
+        pressureStats.length
+          ? pressureStats
+              .slice(0, 3)
+              .map(
+                (item) => `
+                  <article>
+                    <span>${moduleTitle(item.type)} · 回炉压力 ${item.score}</span>
+                    <p>${item.stuck ? `${item.stuck} 题仍不会，` : ""}${item.todo} 题待复述，优先安排回炉和二刷。</p>
+                  </article>
+                `
+              )
+              .join("")
+        : tagStats.length
           ? tagStats
               .slice(0, 3)
               .map(
@@ -1976,6 +1998,7 @@ function renderMistakes() {
       state.reviewStatus[button.dataset.reviewId] = button.dataset.reviewStatus;
       saveState();
       renderMistakes();
+      renderReport();
     });
   });
 }
@@ -2561,6 +2584,25 @@ function errorTagStats() {
   return Object.values(counts).sort((a, b) => b.count - a.count);
 }
 
+function reviewPressureStats() {
+  const weights = { stuck: 4, todo: 2, restated: 1, second: 0 };
+  const stats = {};
+  allMistakes().forEach((item) => {
+    if (!weeklyTemplates[item.type]) {
+      return;
+    }
+    const status = reviewStatus(item.id);
+    const weight = weights[status] ?? 0;
+    if (!weight) {
+      return;
+    }
+    stats[item.type] = stats[item.type] || { type: item.type, score: 0, todo: 0, restated: 0, stuck: 0 };
+    stats[item.type].score += weight;
+    stats[item.type][status] = (stats[item.type][status] || 0) + 1;
+  });
+  return Object.values(stats).sort((a, b) => b.score - a.score || b.stuck - a.stuck);
+}
+
 function saveForReview(type, item) {
   const key = `${type}:${item.title}`;
   const current = state.savedReviews.find((review) => review.key === key);
@@ -2687,6 +2729,7 @@ function renderReport() {
   `;
 
   const tagStats = errorTagStats();
+  const pressureStats = reviewPressureStats();
   document.getElementById("errorTagReport").innerHTML = `
     <div class="error-report-head">
       <span>错因雷达</span>
@@ -2713,6 +2756,32 @@ function renderReport() {
           </div>`
         : `<p class="empty-state">做错或收藏题目后，这里会自动统计错因标签，并给出回练入口。</p>`
     }
+    <div class="review-pressure-report">
+      <div class="error-report-head">
+        <span>回炉压力</span>
+        <strong>${pressureStats.length ? `${moduleTitle(pressureStats[0].type)} 优先` : "暂无压力"}</strong>
+      </div>
+      ${
+        pressureStats.length
+          ? `<div class="pressure-grid">
+              ${pressureStats
+                .slice(0, 4)
+                .map(
+                  (item) => `
+                    <article>
+                      <div>
+                        <span>${moduleTitle(item.type)}</span>
+                        <strong>${item.score}</strong>
+                      </div>
+                      <p>${item.stuck ? `${item.stuck} 题仍不会，` : ""}${item.todo} 题待复述，${item.restated} 题已复述待二刷。</p>
+                    </article>
+                  `
+                )
+                .join("")}
+            </div>`
+          : `<p class="empty-state">把错题标为“仍不会”或“待复述”后，报告会把它们转成训练优先级。</p>`
+      }
+    </div>
   `;
 
   document.querySelectorAll("[data-tag-practice]").forEach((button) => {
@@ -2991,6 +3060,7 @@ document.getElementById("mistakeForm").addEventListener("submit", (event) => {
   text.value = "";
   saveState();
   renderMistakes();
+  renderReport();
 });
 
 document.getElementById("themeToggle").addEventListener("click", () => {
