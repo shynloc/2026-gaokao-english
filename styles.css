@@ -1978,6 +1978,94 @@ select {
   color: var(--paper);
 }
 
+.library-control {
+  display: grid;
+  grid-template-columns: minmax(0, 1.1fr) minmax(300px, 0.9fr);
+  gap: 14px;
+  margin-bottom: 16px;
+}
+
+.library-overview {
+  display: grid;
+  grid-template-columns: 0.7fr 0.7fr 1.4fr;
+  gap: 10px;
+}
+
+.library-overview article,
+.library-filterbar {
+  border: 1px solid var(--line);
+  background: var(--bg);
+}
+
+.library-overview article {
+  display: grid;
+  align-content: start;
+  gap: 6px;
+  min-width: 0;
+  padding: 14px;
+}
+
+.library-overview span,
+.library-card-head span {
+  color: var(--orange);
+  font-size: 12px;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+.library-overview strong {
+  overflow-wrap: anywhere;
+  font-size: clamp(22px, 2.6vw, 34px);
+  line-height: 1;
+}
+
+.library-overview p {
+  margin: 0;
+  color: var(--muted);
+  line-height: 1.5;
+}
+
+.library-filterbar {
+  display: grid;
+  gap: 10px;
+  padding: 12px;
+}
+
+.library-filterbar input {
+  width: 100%;
+}
+
+.library-use-filter {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 6px;
+}
+
+.library-use-filter button {
+  display: grid;
+  min-width: 0;
+  min-height: 42px;
+  border: 1px solid var(--line);
+  background: var(--paper);
+  color: var(--ink);
+  padding: 7px;
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: 900;
+  text-align: center;
+}
+
+.library-use-filter button.active {
+  border-color: var(--ink);
+  background: var(--ink);
+  color: var(--paper);
+}
+
+.library-use-filter span {
+  color: inherit;
+  font-size: 11px;
+}
+
 .library-grid {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
@@ -2159,22 +2247,55 @@ select {
 }
 
 .library-card {
+  display: grid;
+  align-content: start;
+  gap: 10px;
   min-height: 250px;
   padding: 18px;
   border: 1px solid var(--line);
   background: var(--bg);
 }
 
-.library-card span {
-  color: var(--orange);
+.library-card-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.library-card-head em {
+  color: var(--muted);
   font-size: 12px;
+  font-style: normal;
   font-weight: 900;
-  text-transform: uppercase;
+  text-align: right;
 }
 
 .library-card h3 {
-  margin: 14px 0 10px;
+  margin: 0;
   font-size: 24px;
+}
+
+.library-card p {
+  margin: 0;
+  color: var(--muted);
+  line-height: 1.6;
+}
+
+.library-card button {
+  justify-self: start;
+  min-height: 36px;
+  border: 1px solid var(--ink);
+  background: var(--paper);
+  color: var(--ink);
+  padding: 8px 12px;
+  cursor: pointer;
+  font-weight: 900;
+}
+
+.library-card button:hover {
+  background: var(--ink);
+  color: var(--paper);
 }
 
 .tabs {
@@ -2868,6 +2989,10 @@ textarea {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
+  .library-control {
+    grid-template-columns: 1fr;
+  }
+
   .practice-insight {
     grid-template-columns: 1fr;
   }
@@ -2925,6 +3050,14 @@ textarea {
   .library-grid,
   .score-blueprint-grid {
     grid-template-columns: 1fr;
+  }
+
+  .library-overview {
+    grid-template-columns: 1fr;
+  }
+
+  .library-use-filter {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
   .task {

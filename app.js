@@ -861,6 +861,64 @@ const libraryContent = {
   });
 });
 
+const libraryCategoryMeta = {
+  checklist: { label: "考前清单", use: "review", stage: "考前 7-14 天", focus: "把最后检查动作变成可执行清单" },
+  writing: { label: "写作素材", use: "writing", stage: "每天 15 分钟", focus: "应用文和续写可直接迁移" },
+  grammar: { label: "语法速查", use: "practice", stage: "碎片时间回炉", focus: "动词、词性、从句先稳住" },
+  timeline: { label: "考试节奏", use: "exam", stage: "套卷前后", focus: "控制时间、卡题处理、考前保温" },
+};
+
+const libraryUseFilters = [
+  { id: "all", label: "全部" },
+  { id: "review", label: "复盘" },
+  { id: "practice", label: "专项" },
+  { id: "writing", label: "写作" },
+  { id: "exam", label: "套卷" },
+];
+
+let activeLibraryCategory = "checklist";
+let activeLibraryUse = "all";
+let libraryQuery = "";
+
+function libraryCardProfile(card, category) {
+  const text = [card.title, card.tag, ...(card.items || [])].join(" ").toLowerCase();
+  const categoryMeta = libraryCategoryMeta[category] || libraryCategoryMeta.checklist;
+  let use = card.use || categoryMeta.use;
+  let target = { type: "mistakes", value: "mistakes", label: "去错题回炉" };
+
+  if (category === "writing" || text.includes("writing") || text.includes("续写") || text.includes("应用文")) {
+    use = "writing";
+    target = { type: "writing", value: "writing", label: "打开写作实验室" };
+  } else if (category === "grammar" || text.includes("grammar") || text.includes("非谓语") || text.includes("从句")) {
+    use = "practice";
+    target = { type: "practice", value: "grammar", label: "练语法专项" };
+  } else if (category === "timeline" || text.includes("timing") || text.includes("exam")) {
+    use = "exam";
+    target = { type: "mock", value: "mock", label: "去做模拟卷" };
+  } else if (text.includes("reading") || text.includes("阅读")) {
+    use = "practice";
+    target = { type: "practice", value: "reading", label: "练阅读专项" };
+  }
+
+  return {
+    use,
+    stage: card.stage || categoryMeta.stage,
+    action: card.action || categoryMeta.focus,
+    target,
+  };
+}
+
+function libraryCardsFor(category = activeLibraryCategory) {
+  const query = libraryQuery.trim().toLowerCase();
+  return (libraryContent[category] || [])
+    .map((card) => ({ ...card, profile: libraryCardProfile(card, category) }))
+    .filter((card) => activeLibraryUse === "all" || card.profile.use === activeLibraryUse)
+    .filter((card) => {
+      if (!query) return true;
+      return [card.title, card.tag, card.profile.stage, card.profile.action, ...(card.items || [])].join(" ").toLowerCase().includes(query);
+    });
+}
+
 const prescriptionPacks = externalContent.prescriptionPacks || [
   {
     id: "listening-turn",
@@ -1573,18 +1631,99 @@ function renderModules() {
   });
 }
 
-function renderLibrary(category = "checklist") {
-  document.getElementById("libraryGrid").innerHTML = libraryContent[category]
-    .map(
-      (card) => `
-        <article class="library-card">
-          <span>${card.tag}</span>
-          <h3>${card.title}</h3>
-          <ul>${card.items.map((item) => `<li>${item}</li>`).join("")}</ul>
-        </article>
-      `
-    )
+function openLibraryTarget(type, value) {
+  if (type === "practice") {
+    document.getElementById("practiceSelect").value = value;
+    renderPractice(value);
+    document.getElementById("practice").scrollIntoView({ behavior: "smooth", block: "start" });
+    return;
+  }
+
+  if (type === "writing") {
+    document.getElementById("writing").scrollIntoView({ behavior: "smooth", block: "start" });
+    return;
+  }
+
+  if (type === "mock") {
+    document.getElementById("mock").scrollIntoView({ behavior: "smooth", block: "start" });
+    return;
+  }
+
+  if (type === "mistakes") {
+    document.getElementById("mistakes").scrollIntoView({ behavior: "smooth", block: "start" });
+  }
+}
+
+function renderLibrary(category = activeLibraryCategory) {
+  activeLibraryCategory = category;
+  const cards = libraryCardsFor(category);
+  const allCards = libraryContent[category] || [];
+  const meta = libraryCategoryMeta[category] || libraryCategoryMeta.checklist;
+  const totalItems = allCards.reduce((sum, card) => sum + (card.items?.length || 0), 0);
+  const uses = allCards.reduce((acc, card) => {
+    const use = libraryCardProfile(card, category).use;
+    acc[use] = (acc[use] || 0) + 1;
+    return acc;
+  }, {});
+
+  document.getElementById("libraryOverview").innerHTML = `
+    <article>
+      <span>${meta.label}</span>
+      <strong>${allCards.length}</strong>
+      <p>资源卡</p>
+    </article>
+    <article>
+      <span>Action Points</span>
+      <strong>${totalItems}</strong>
+      <p>可执行要点</p>
+    </article>
+    <article class="wide">
+      <span>${meta.stage}</span>
+      <strong>${meta.focus}</strong>
+      <p>${Object.entries(uses)
+        .map(([use, count]) => `${libraryUseFilters.find((item) => item.id === use)?.label || use} ${count}`)
+        .join(" · ")}</p>
+    </article>
+  `;
+
+  document.getElementById("libraryUseFilter").innerHTML = libraryUseFilters
+    .map((filter) => {
+      const count = filter.id === "all" ? allCards.length : allCards.filter((card) => libraryCardProfile(card, category).use === filter.id).length;
+      return `<button class="${activeLibraryUse === filter.id ? "active" : ""}" type="button" data-library-use="${filter.id}">${filter.label}<span>${count}</span></button>`;
+    })
     .join("");
+
+  document.getElementById("libraryGrid").innerHTML = cards.length
+    ? cards
+        .map(
+          (card, index) => `
+            <article class="library-card">
+              <div class="library-card-head">
+                <span>${card.tag}</span>
+                <em>${card.profile.stage}</em>
+              </div>
+              <h3>${card.title}</h3>
+              <p>${card.profile.action}</p>
+              <ul>${card.items.map((item) => `<li>${item}</li>`).join("")}</ul>
+              <button type="button" data-library-target="${card.profile.target.type}" data-library-target-value="${card.profile.target.value}">
+                ${card.profile.target.label}
+              </button>
+            </article>
+          `
+        )
+        .join("")
+    : `<p class="empty-state">没有匹配的资源。换一个关键词或筛选条件试试。</p>`;
+
+  document.querySelectorAll("[data-library-use]").forEach((button) => {
+    button.addEventListener("click", () => {
+      activeLibraryUse = button.dataset.libraryUse;
+      renderLibrary(activeLibraryCategory);
+    });
+  });
+
+  document.querySelectorAll("[data-library-target]").forEach((button) => {
+    button.addEventListener("click", () => openLibraryTarget(button.dataset.libraryTarget, button.dataset.libraryTargetValue));
+  });
 }
 
 function renderCalendar() {
@@ -3616,8 +3755,16 @@ document.querySelectorAll(".library-tab").forEach((tab) => {
   tab.addEventListener("click", () => {
     document.querySelectorAll(".library-tab").forEach((item) => item.classList.remove("active"));
     tab.classList.add("active");
+    activeLibraryUse = "all";
+    document.getElementById("librarySearch").value = "";
+    libraryQuery = "";
     renderLibrary(tab.dataset.library);
   });
+});
+
+document.getElementById("librarySearch").addEventListener("input", (event) => {
+  libraryQuery = event.target.value;
+  renderLibrary(activeLibraryCategory);
 });
 
 document.getElementById("practiceSelect").innerHTML = modules
