@@ -56,6 +56,12 @@ input {
   font: inherit;
 }
 
+main[id],
+section[id],
+article[id] {
+  scroll-margin-top: 92px;
+}
+
 .topbar {
   position: sticky;
   top: 0;
@@ -3477,6 +3483,12 @@ textarea {
 }
 
 @media (max-width: 960px) {
+  main[id],
+  section[id],
+  article[id] {
+    scroll-margin-top: 142px;
+  }
+
   .topbar {
     align-items: flex-start;
     flex-wrap: wrap;

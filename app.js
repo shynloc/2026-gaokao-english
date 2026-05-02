@@ -4399,6 +4399,20 @@ function updateDraftCount() {
   document.getElementById("draftCount").textContent = `${words} words`;
 }
 
+function scrollToCurrentHash(behavior = "auto") {
+  const id = decodeURIComponent(window.location.hash.replace("#", ""));
+  const target = id ? document.getElementById(id) : null;
+  if (target) {
+    target.scrollIntoView({ behavior, block: "start" });
+  }
+}
+
+function scheduleHashScroll() {
+  [80, 260, 700, 1200].forEach((delay) => {
+    window.setTimeout(() => scrollToCurrentHash("auto"), delay);
+  });
+}
+
 document.getElementById("targetScore").value = state.targetScore;
 document.getElementById("targetScore").addEventListener("input", (event) => {
   state.targetScore = event.target.value;
@@ -4602,6 +4616,10 @@ document.getElementById("themeToggle").addEventListener("click", () => {
   document.body.classList.toggle("dark");
 });
 
+window.addEventListener("hashchange", () => {
+  scheduleHashScroll();
+});
+
 renderTasks();
 renderPlan();
 renderSprintRoute();
@@ -4624,3 +4642,4 @@ renderReport();
 renderReviewQueue();
 renderScoreTips();
 updateDraftCount();
+scheduleHashScroll();
