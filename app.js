@@ -3292,6 +3292,101 @@ function renderMockSectionBreakdown(sectionBreakdown = []) {
   `;
 }
 
+function mockTimingAdvice(accuracy, weakestType) {
+  if (accuracy < 55) {
+    return "下次先保基础题：阅读和语法遇到卡题 90 秒先标记，作文至少预留 15 分钟写完整。";
+  }
+  if (weakestType === "reading" || weakestType === "seven") {
+    return "下次阅读区块先限时定位，单题超过 2 分钟先跳过，交卷前回看证据句。";
+  }
+  if (weakestType === "grammar" || weakestType === "cloze") {
+    return "下次语言运用先做有把握的动词空和搭配题，不在单个语境空上拖太久。";
+  }
+  if (weakestType === "listening") {
+    return "下次听力先圈数字、转折和人物关系，第二遍只核对变化信息。";
+  }
+  return "下次把选择题控制在计划时间内，写作留出审题、成文和最后检查三段时间。";
+}
+
+function mockWritingAdvice(words) {
+  if (words === 0) {
+    return "作文未输出。下次先写提纲和开头，保证任务要点完整，再考虑升级句式。";
+  }
+  if (words < 80) {
+    return "作文词数偏少。下一次补足主体细节：方法/动作 + 原因/结果 + 结尾提醒。";
+  }
+  if (words > 150) {
+    return "作文可能偏长。下一次压缩背景句，把篇幅留给任务要点和动作推进。";
+  }
+  return "作文长度基本可控。下一步重点检查语气、信息密度和续写原文回扣。";
+}
+
+function buildMockReviewPlan({ exam, sectionBreakdown, accuracy, addedReviews, writingWords }) {
+  const weakest = sectionBreakdown
+    .filter((section) => section.total)
+    .map((section) => ({
+      ...section,
+      rate: section.total ? section.correct / section.total : 1,
+    }))
+    .sort((a, b) => a.rate - b.rate || b.choiceScore - a.choiceScore)[0];
+  const weakestType = weakest?.type || "reading";
+  const missed = sectionBreakdown.reduce((sum, section) => sum + Math.max(0, (section.total || 0) - (section.correct || 0)), 0);
+  const focus = weakest ? `${weakest.title}：${weakest.correct}/${weakest.total} 题` : "暂无明显薄弱项";
+
+  return {
+    title: `${exam.title} 复盘卡`,
+    focus,
+    accuracy,
+    missed,
+    weakestType,
+    timing: mockTimingAdvice(accuracy, weakestType),
+    review: addedReviews ? `本次 ${addedReviews} 道未答或错题已入库，优先复述最近薄弱项。` : "本次没有新增错题，建议把正确题中的犹豫题也做一次证据复述。",
+    writing: mockWritingAdvice(writingWords),
+    actions: [
+      { label: "回练薄弱项", type: "practice", value: weakestType },
+      { label: "看错题回炉", type: "mistakes", value: "mistakes" },
+      { label: "打开写作工具箱", type: "writing", value: "writing" },
+    ],
+  };
+}
+
+function renderMockReviewPlan(plan) {
+  if (!plan) {
+    return "";
+  }
+
+  return `
+    <div class="mock-review-plan">
+      <div class="review-plan-head">
+        <span>Post Exam Review</span>
+        <h3>${plan.title}</h3>
+        <strong>${plan.accuracy}%</strong>
+      </div>
+      <div class="review-plan-grid">
+        <article>
+          <span>最大失分点</span>
+          <p>${plan.focus}</p>
+        </article>
+        <article>
+          <span>下次时间策略</span>
+          <p>${plan.timing}</p>
+        </article>
+        <article>
+          <span>回炉任务</span>
+          <p>${plan.review}</p>
+        </article>
+        <article>
+          <span>写作修改</span>
+          <p>${plan.writing}</p>
+        </article>
+      </div>
+      <div class="review-plan-actions">
+        ${plan.actions.map((action) => `<button type="button" data-mock-review-action="${action.type}" data-mock-review-value="${action.value}">${action.label}</button>`).join("")}
+      </div>
+    </div>
+  `;
+}
+
 function submitMockExam() {
   const exam = currentMockExam();
   const questions = mockQuestions();
@@ -3303,6 +3398,7 @@ function submitMockExam() {
   const rawScore = correct.reduce((sum, question) => sum + question.score, 0);
   const totalChoiceScore = choiceQuestions.reduce((sum, question) => sum + question.score, 0);
   const sectionBreakdown = buildMockSectionBreakdown(choiceQuestions);
+  const accuracy = choiceQuestions.length ? Math.round((correct.length / choiceQuestions.length) * 100) : 0;
   const weakestSection = sectionBreakdown
     .filter((section) => section.total)
     .map((section) => ({ title: section.title, type: section.type, rate: section.total ? section.correct / section.total : 1 }))
@@ -3313,13 +3409,15 @@ function submitMockExam() {
     examTitle: exam.title,
     score: Math.round(rawScore),
     total: totalChoiceScore,
-    accuracy: choiceQuestions.length ? Math.round((correct.length / choiceQuestions.length) * 100) : 0,
+    accuracy,
     writingWords,
     weakest: weakestSection?.title || "暂无",
     weakestType: weakestSection?.type || "reading",
     sectionBreakdown,
   };
   const addedReviews = saveMockWrongAnswers(choiceQuestions);
+  const reviewPlan = buildMockReviewPlan({ exam, sectionBreakdown, accuracy, addedReviews, writingWords });
+  attempt.reviewPlan = reviewPlan;
   state.mockAttempts = [attempt, ...state.mockAttempts].slice(0, 6);
   saveState();
 
@@ -3346,6 +3444,7 @@ function submitMockExam() {
       <strong>${exam.title}</strong>
       <p>本次未答或答错的选择题已自动进入收藏回炉，并带上错因标签，可在学习报告和周计划中继续联动。</p>
     </div>
+    ${renderMockReviewPlan(reviewPlan)}
     ${renderMockSectionBreakdown(sectionBreakdown)}
     <div class="mock-review-list">
       ${choiceQuestions
@@ -3431,6 +3530,7 @@ function renderMockStoredReport() {
         <p>${latest.examTitle || "微型模拟卷"} · ${latest.date}</p>
       </div>
     </div>
+    ${renderMockReviewPlan(latest.reviewPlan)}
     ${renderMockSectionBreakdown(latest.sectionBreakdown)}
     ${renderMockHistory()}
   `;
@@ -3480,6 +3580,26 @@ function renderMockTrend() {
 }
 
 function bindMockReportActions() {
+  document.querySelectorAll("[data-mock-review-action]").forEach((button) => {
+    button.addEventListener("click", () => {
+      const type = button.dataset.mockReviewAction;
+      const value = button.dataset.mockReviewValue;
+      if (type === "practice") {
+        document.getElementById("practiceSelect").value = value;
+        renderPractice(value);
+        document.getElementById("practice").scrollIntoView({ behavior: "smooth", block: "start" });
+        return;
+      }
+      if (type === "writing") {
+        document.getElementById("writing").scrollIntoView({ behavior: "smooth", block: "start" });
+        return;
+      }
+      if (type === "mistakes") {
+        document.getElementById("mistakes").scrollIntoView({ behavior: "smooth", block: "start" });
+      }
+    });
+  });
+
   document.querySelectorAll("[data-mock-trend-practice]").forEach((button) => {
     button.addEventListener("click", () => {
       document.getElementById("practiceSelect").value = button.dataset.mockTrendPractice;
