@@ -28,6 +28,7 @@ state.weeklyDone = state.weeklyDone || {};
 state.reviewStatus = state.reviewStatus || {};
 state.mistakeFilters = state.mistakeFilters || { type: "all", tag: "all", status: "all" };
 state.secondPassDone = state.secondPassDone || {};
+state.finalSprintDone = state.finalSprintDone || {};
 state.sprintRoute = state.sprintRoute || "30";
 
 const externalContent = window.E26_CONTENT || {};
@@ -67,6 +68,23 @@ const tasks = [
     detail: "积累 6 个动作表达，并仿写一段 80 词情节推进。",
     time: "20m",
   },
+];
+
+const finalSprintDays = [
+  { day: 14, focus: "定节奏", task: "完整走一遍阅读到作文的时间分配", action: "mock" },
+  { day: 13, focus: "阅读证据", task: "阅读 2 篇只复盘定位句和同义替换", action: "reading" },
+  { day: 12, focus: "语法保分", task: "动词空、词性转换、连接词各做一组", action: "grammar" },
+  { day: 11, focus: "写作骨架", task: "应用文 1 篇，续写动作链 6 句", action: "writing" },
+  { day: 10, focus: "错题一筛", task: "只留下仍不会和待复述错题", action: "mistakes" },
+  { day: 9, focus: "半套限时", task: "阅读 + 七选五 + 语法，固定用时", action: "mock" },
+  { day: 8, focus: "完形语境", task: "复盘人物情绪线和上下文线索", action: "cloze" },
+  { day: 7, focus: "听力信号", task: "转折、数字、态度题集中听 15 道", action: "listening" },
+  { day: 6, focus: "作文升级", task: "把一篇旧作文按清单重写", action: "writing" },
+  { day: 5, focus: "错题二刷", task: "完成三日二刷计划的当天卡片", action: "mistakes" },
+  { day: 4, focus: "全卷节奏", task: "做一套微型模拟并看分项报告", action: "mock" },
+  { day: 3, focus: "词块调用", task: "8 个高频词块造句并改成作文句", action: "vocab" },
+  { day: 2, focus: "低错清单", task: "只看仍不会、易漏要点和作文开头结尾", action: "mistakes" },
+  { day: 1, focus: "稳定输出", task: "轻量复盘，不再开新难题", action: "reading" },
 ];
 
 const modules = [
@@ -1652,6 +1670,148 @@ function updateProgress() {
   document.getElementById("taskMeter").value = completed;
 }
 
+function currentFinalSprintDay() {
+  if (daysLeft <= 14) {
+    return Math.min(14, Math.max(1, 15 - daysLeft));
+  }
+  return ((today.getDate() - 1) % 14) + 1;
+}
+
+function finalSprintStatusLabel() {
+  if (daysLeft <= 14) {
+    return `D-${Math.max(1, daysLeft)}`;
+  }
+  return "14天预演";
+}
+
+function finalSprintActionTarget(action) {
+  if (action === "mock") return { type: "mock", value: "mock" };
+  if (action === "writing") return { type: "writing", value: "writing" };
+  if (action === "mistakes") return { type: "mistakes", value: "mistakes" };
+  return { type: "practice", value: action };
+}
+
+function dailyCommandCards() {
+  const pressure = reviewPressureStats();
+  const priorityType = pressure[0]?.type || weeklyPriorityTypes()[0] || "reading";
+  const todayReviews = todayReviewItems(allMistakes());
+  const writingPrompt = currentWritingPrompt();
+  const mockExam = currentMockExam();
+
+  return [
+    {
+      id: "priority",
+      eyebrow: "Priority",
+      title: `${moduleTitle(priorityType)}稳分`,
+      text: pressure[0]
+        ? `回炉压力 ${pressure[0].score}，先用 15 分钟处理最容易反复丢分的同类题。`
+        : "先完成一组专项，建立今天的题感和证据链。",
+      action: "练对应专项",
+      target: { type: "practice", value: priorityType },
+    },
+    {
+      id: "review",
+      eyebrow: "Review",
+      title: `${todayReviews.length || 0} 题回炉`,
+      text: todayReviews.length ? "先口头复述错因，再决定标记为已复述、二刷完成或仍不会。" : "今天没有待回炉题，可以做一题后主动收藏复盘。",
+      action: "打开错题",
+      target: { type: "mistakes", value: "mistakes" },
+    },
+    {
+      id: "writing",
+      eyebrow: "Writing",
+      title: writingPrompt?.title || "作文输出",
+      text: writingPrompt ? `${writingPrompt.type}：先列任务要点，再用清单自查。` : "完成一段可迁移表达，保持写作手感。",
+      action: "写一篇",
+      target: { type: "writing", value: "writing" },
+    },
+    {
+      id: "mock",
+      eyebrow: "Mock",
+      title: mockExam?.title || "微型模拟",
+      text: state.mockAttempts.length
+        ? `最近一次正确率 ${state.mockAttempts[0].accuracy || 0}%，今天盯住薄弱项。`
+        : "做一套微型模拟，立刻把错题加入回炉池。",
+      action: "做模拟",
+      target: { type: "mock", value: "mock" },
+    },
+  ];
+}
+
+function renderDailyCommand() {
+  const container = document.getElementById("dailyCommand");
+  if (!container) {
+    return;
+  }
+
+  const sprintDay = currentFinalSprintDay();
+  const todayPlan = finalSprintDays.find((item) => item.day === 15 - sprintDay) || finalSprintDays[0];
+  const completed = tasks.filter((task) => state.tasks[task.id]).length;
+  const completion = Math.round((completed / tasks.length) * 100);
+  const cards = dailyCommandCards();
+
+  container.innerHTML = `
+    <div class="daily-command-head">
+      <div>
+        <span>${finalSprintStatusLabel()}</span>
+        <strong>14天冲刺执行台</strong>
+        <p>${todayPlan.focus}：${todayPlan.task}</p>
+      </div>
+      <div class="daily-score">
+        <strong>${completion}%</strong>
+        <span>今日任务</span>
+      </div>
+    </div>
+    <div class="daily-command-grid">
+      ${cards
+        .map(
+          (card) => `
+            <article>
+              <span>${card.eyebrow}</span>
+              <strong>${card.title}</strong>
+              <p>${card.text}</p>
+              <button type="button" data-daily-action-type="${card.target.type}" data-daily-action-value="${card.target.value}">
+                ${card.action}
+              </button>
+            </article>
+          `
+        )
+        .join("")}
+    </div>
+    <div class="final-sprint-strip" aria-label="14天冲刺微循环">
+      ${finalSprintDays
+        .map((item) => {
+          const key = `d${item.day}`;
+          const active = item.day === todayPlan.day;
+          const done = Boolean(state.finalSprintDone[key]);
+          return `
+            <button class="${active ? "active" : ""} ${done ? "done" : ""}" type="button" data-final-sprint="${key}" data-final-action="${item.action}">
+              <span>D-${item.day}</span>
+              <strong>${item.focus}</strong>
+            </button>
+          `;
+        })
+        .join("")}
+    </div>
+  `;
+
+  document.querySelectorAll("[data-daily-action-type]").forEach((button) => {
+    button.addEventListener("click", () => {
+      openLibraryTarget(button.dataset.dailyActionType, button.dataset.dailyActionValue);
+    });
+  });
+
+  document.querySelectorAll("[data-final-sprint]").forEach((button) => {
+    button.addEventListener("click", () => {
+      state.finalSprintDone[button.dataset.finalSprint] = !state.finalSprintDone[button.dataset.finalSprint];
+      saveState();
+      const target = finalSprintActionTarget(button.dataset.finalAction);
+      renderDailyCommand();
+      openLibraryTarget(target.type, target.value);
+    });
+  });
+}
+
 function renderTasks() {
   document.getElementById("taskList").innerHTML = tasks
     .map(
@@ -1673,9 +1833,11 @@ function renderTasks() {
       state.tasks[input.dataset.task] = input.checked;
       saveState();
       updateProgress();
+      renderDailyCommand();
     });
   });
   updateProgress();
+  renderDailyCommand();
 }
 
 function renderPlan() {
@@ -2995,6 +3157,7 @@ function renderMistakes() {
   renderMistakeFilters(items);
   renderMistakeSummary(items);
   renderSecondPassPlan(items);
+  renderDailyCommand();
   renderTodayReview(filtered);
 
   document.getElementById("mistakeGrid").innerHTML = filtered.length
@@ -3859,6 +4022,7 @@ function recordAnswer(type, isCorrect) {
   }
   saveState();
   renderReport();
+  renderDailyCommand();
 }
 
 function defaultTagsForType(type) {
@@ -4277,6 +4441,7 @@ document.querySelectorAll(".tab").forEach((tab) => {
       renderWritingPromptSelect();
       renderWritingPrompt();
       renderWritingChecklist();
+      renderDailyCommand();
     } else {
       setActiveWritingTab(tab.dataset.tab);
     }
@@ -4288,6 +4453,7 @@ document.getElementById("writingPromptSelect").addEventListener("change", (event
   saveState();
   renderWritingPrompt();
   renderWritingChecklist();
+  renderDailyCommand();
 });
 
 document.querySelectorAll(".library-tab").forEach((tab) => {
