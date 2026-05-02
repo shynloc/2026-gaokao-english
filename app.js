@@ -27,6 +27,7 @@ state.weeklyIntensity = state.weeklyIntensity || "75";
 state.weeklyDone = state.weeklyDone || {};
 state.reviewStatus = state.reviewStatus || {};
 state.mistakeFilters = state.mistakeFilters || { type: "all", tag: "all", status: "all" };
+state.sprintRoute = state.sprintRoute || "30";
 
 const externalContent = window.E26_CONTENT || {};
 const contentExpansion = window.E26_EXPANSION || {};
@@ -161,6 +162,108 @@ const plans = {
     ["03", "综合套卷", "每周固定套卷，建立分数和时间曲线。"],
     ["04", "稳定输出", "按考试节奏压缩波动，维护手感。"],
   ],
+};
+
+const sprintRoutes = {
+  30: {
+    title: "30 天补漏洞路线",
+    label: "30 天",
+    rhythm: "4 天一轮：专项纠偏 → 写作输出 → 半套模拟 → 错题回炉",
+    target: "把反复失分点压下来，建立稳定节奏，不再大面积开新资料。",
+    blocks: [
+      {
+        range: "Day 1-10",
+        focus: "漏洞定位",
+        minutes: "70-90 min/day",
+        tasks: ["阅读/七选五限时交替", "语法动词空和词性转换回炉", "每天整理 3 条高频错因"],
+        output: "错因清单 + 2 张证据表",
+        action: { type: "mistakes", value: "mistakes", label: "整理错题" },
+      },
+      {
+        range: "Day 11-20",
+        focus: "题型提速",
+        minutes: "80-95 min/day",
+        tasks: ["隔天做一套微型模拟", "阅读卡题限时 2 分钟", "作文每天 1 个任务提纲"],
+        output: "模拟报告 + 写作提纲库",
+        action: { type: "mock", value: "mock", label: "做模拟卷" },
+      },
+      {
+        range: "Day 21-30",
+        focus: "稳定输出",
+        minutes: "65-85 min/day",
+        tasks: ["错题二刷优先", "写作范文对照升级", "考前清单只看高频项"],
+        output: "最后一轮回炉任务",
+        action: { type: "writing", value: "writing", label: "练写作" },
+      },
+    ],
+    guardrails: ["不再无计划刷整本新题", "错题不只抄答案，必须写错因", "作文不要背长模板，优先任务完整"],
+  },
+  14: {
+    title: "14 天稳节奏路线",
+    label: "14 天",
+    rhythm: "2 天一循环：半套限时 + 专项回炉 + 写作定型",
+    target: "让分数波动变小，固定考试时间分配和写作输出方式。",
+    blocks: [
+      {
+        range: "Day 1-4",
+        focus: "定时间",
+        minutes: "75-90 min/day",
+        tasks: ["阅读七选五 35-40 分钟限时", "语言运用控制在 20 分钟", "复盘超时题原因"],
+        output: "一张时间分配表",
+        action: { type: "library", value: "timeline", label: "看考试节奏" },
+      },
+      {
+        range: "Day 5-10",
+        focus: "定写法",
+        minutes: "70-85 min/day",
+        tasks: ["应用文和续写隔天输出", "用素材库升级 1 段草稿", "每篇只改 2 个最影响分数的问题"],
+        output: "4 篇可复用写作稿",
+        action: { type: "writing", value: "writing", label: "打开写作工具箱" },
+      },
+      {
+        range: "Day 11-14",
+        focus: "定回炉",
+        minutes: "55-75 min/day",
+        tasks: ["只看仍不会和待复述错题", "每天 1 组保温练习", "睡前看词块和语法速查"],
+        output: "考前保温清单",
+        action: { type: "practice", value: "grammar", label: "做保温练习" },
+      },
+    ],
+    guardrails: ["不要临时换做题顺序", "不要把作文留到最后 15 分钟", "不要为了难题牺牲稳定题"],
+  },
+  7: {
+    title: "7 天保手感路线",
+    label: "7 天",
+    rhythm: "轻量高频：错题复述 + 保温小练 + 写作清单",
+    target: "保持熟悉感和信心，只修补最常错的动作，不制造新焦虑。",
+    blocks: [
+      {
+        range: "Day 1-2",
+        focus: "保阅读手感",
+        minutes: "55-70 min/day",
+        tasks: ["阅读 1-2 篇只练定位", "七选五 1 组只标逻辑", "不纠缠冷门生词"],
+        output: "最后一张阅读证据表",
+        action: { type: "practice", value: "reading", label: "练阅读定位" },
+      },
+      {
+        range: "Day 3-5",
+        focus: "保写作输出",
+        minutes: "50-65 min/day",
+        tasks: ["应用文 1 篇", "续写动作链 6 句", "只看升级范文的结构和动作"],
+        output: "两段写作保温稿",
+        action: { type: "writing", value: "writing", label: "写一段草稿" },
+      },
+      {
+        range: "Day 6-7",
+        focus: "保考场节奏",
+        minutes: "40-55 min/day",
+        tasks: ["看错因标签，不开新题", "做 1 套临考保温卷", "默想时间分配和跳题规则"],
+        output: "上考场前 10 分钟清单",
+        action: { type: "mock", value: "mock", label: "做保温卷" },
+      },
+    ],
+    guardrails: ["不要熬夜刷题", "不要临时背陌生高级表达", "不要因为一套卷波动否定整体策略"],
+  },
 };
 
 const practiceBank = {
@@ -1600,6 +1703,98 @@ function renderPlan() {
       state.phase = phase.dataset.phase;
       saveState();
       renderPlan();
+    });
+  });
+}
+
+function openSprintTarget(action) {
+  if (action.type === "library") {
+    activeLibraryCategory = action.value;
+    activeLibraryUse = "all";
+    libraryQuery = "";
+    document.querySelectorAll(".library-tab").forEach((tab) => tab.classList.toggle("active", tab.dataset.library === action.value));
+    document.getElementById("librarySearch").value = "";
+    renderLibrary(action.value);
+    document.getElementById("library").scrollIntoView({ behavior: "smooth", block: "start" });
+    return;
+  }
+
+  openLibraryTarget(action.type, action.value);
+}
+
+function renderSprintRoute() {
+  const route = sprintRoutes[state.sprintRoute] || sprintRoutes[30];
+  const totalTasks = route.blocks.reduce((sum, block) => sum + block.tasks.length, 0);
+  document.getElementById("sprintRoute").innerHTML = `
+    <div class="sprint-route-head">
+      <div>
+        <span>Countdown Route</span>
+        <h3>${route.title}</h3>
+        <p>${route.target}</p>
+      </div>
+      <div class="route-tabs" role="group" aria-label="倒计时路线">
+        ${Object.entries(sprintRoutes)
+          .map(
+            ([key, item]) => `
+              <button class="${state.sprintRoute === key ? "active" : ""}" type="button" data-sprint-route="${key}">
+                ${item.label}
+              </button>
+            `
+          )
+          .join("")}
+      </div>
+    </div>
+    <div class="route-metrics">
+      <article>
+        <span>Rhythm</span>
+        <strong>${route.rhythm}</strong>
+      </article>
+      <article>
+        <span>Action Points</span>
+        <strong>${totalTasks}</strong>
+      </article>
+      <article>
+        <span>Days Left</span>
+        <strong>${daysLeft}</strong>
+      </article>
+    </div>
+    <div class="route-block-grid">
+      ${route.blocks
+        .map(
+          (block) => `
+            <article class="route-block">
+              <div>
+                <span>${block.range}</span>
+                <time>${block.minutes}</time>
+              </div>
+              <h4>${block.focus}</h4>
+              <ul>${block.tasks.map((task) => `<li>${task}</li>`).join("")}</ul>
+              <p>${block.output}</p>
+              <button type="button" data-route-action-type="${block.action.type}" data-route-action-value="${block.action.value}">
+                ${block.action.label}
+              </button>
+            </article>
+          `
+        )
+        .join("")}
+    </div>
+    <div class="route-guardrails">
+      <span>不要做什么</span>
+      ${route.guardrails.map((item) => `<p>${item}</p>`).join("")}
+    </div>
+  `;
+
+  document.querySelectorAll("[data-sprint-route]").forEach((button) => {
+    button.addEventListener("click", () => {
+      state.sprintRoute = button.dataset.sprintRoute;
+      saveState();
+      renderSprintRoute();
+    });
+  });
+
+  document.querySelectorAll("[data-route-action-type]").forEach((button) => {
+    button.addEventListener("click", () => {
+      openSprintTarget({ type: button.dataset.routeActionType, value: button.dataset.routeActionValue });
     });
   });
 }
@@ -3726,6 +3921,7 @@ document.querySelectorAll("[data-plan]").forEach((button) => {
     saveState();
     document.querySelectorAll("[data-plan]").forEach((item) => item.classList.toggle("active", item === button));
     renderPlan();
+    renderSprintRoute();
   });
 });
 
@@ -3898,6 +4094,7 @@ document.getElementById("themeToggle").addEventListener("click", () => {
 
 renderTasks();
 renderPlan();
+renderSprintRoute();
 renderModules();
 renderCalendar();
 renderPrescription();
