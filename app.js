@@ -638,6 +638,114 @@ const writing = {
   },
 };
 
+const writingToolkit = {
+  practical: {
+    title: "应用文素材库",
+    cards: [
+      {
+        title: "邀请信",
+        tag: "Invite",
+        steps: ["开头直接说明活动和身份", "主体交代时间、地点、内容、对方角色", "结尾表达期待并给出回复方式"],
+        lines: ["I am writing to invite you to take part in...", "The activity will be held in... from... to...", "Your experience would make the event more meaningful."],
+        avoid: "不要只写 You are welcome，必须说明为什么邀请对方。",
+      },
+      {
+        title: "建议信",
+        tag: "Advice",
+        steps: ["先回应对方困难", "给 2 条具体方法", "说明方法为什么有效"],
+        lines: ["I understand how you feel, and here are two suggestions.", "It may help to keep a short daily record of...", "In this way, you can notice your progress more clearly."],
+        avoid: "避免空泛的 work hard / be confident，要写动作和频率。",
+      },
+      {
+        title: "通知",
+        tag: "Notice",
+        steps: ["标题或首句点明活动", "正文给时间、地点、对象、内容", "最后说明报名或参与方式"],
+        lines: ["A ... will be held in the school hall this Friday.", "Anyone interested in ... is welcome to join us.", "Please sign up before Thursday afternoon."],
+        avoid: "通知不需要寒暄，信息必须清楚、紧凑。",
+      },
+      {
+        title: "投稿短文",
+        tag: "Article",
+        steps: ["开头点题", "主体写经历/方法 + 结果", "结尾给启发或建议"],
+        lines: ["What impressed me most was...", "This experience taught me that small actions can make a difference.", "I hope more students will take the first step and try."],
+        avoid: "不要写成流水账，必须有一个清楚中心。",
+      },
+    ],
+  },
+  continuation: {
+    title: "读后续写素材库",
+    cards: [
+      {
+        title: "动作链",
+        tag: "Action",
+        steps: ["看见/意识到问题", "停顿或深呼吸", "采取一个小动作", "动作带来新结果"],
+        lines: ["He took a deep breath and stepped forward.", "She bent down, picked up the note, and held it tightly.", "Without saying a word, he rushed back to the classroom."],
+        avoid: "不要只写 He was sad，要让动作替情绪说话。",
+      },
+      {
+        title: "情绪外显",
+        tag: "Emotion",
+        steps: ["用表情、声音、手部动作表现情绪", "写出情绪变化原因", "让情绪推动下一步行动"],
+        lines: ["Her voice trembled slightly, but she kept speaking.", "A warm smile spread across his face.", "He lowered his eyes, unable to meet his father's gaze."],
+        avoid: "避免连续堆 happy, nervous, moved 这类直白形容词。",
+      },
+      {
+        title: "原文回扣",
+        tag: "Echo",
+        steps: ["找原文物件、承诺、目标或人物关系", "第一段重新出现", "结尾让它产生意义"],
+        lines: ["His fingers touched the old compass in his pocket.", "She suddenly remembered the promise they had made.", "The small badge now felt heavier, but warmer, in his hand."],
+        avoid: "不要引入和原文无关的新人物、新地点、新主题。",
+      },
+      {
+        title: "克制升华",
+        tag: "Ending",
+        steps: ["先解决故事冲突", "再写人物理解", "最后用原文细节收住"],
+        lines: ["Only then did he realize that courage could begin with a small honest step.", "The rain had stopped, and so had the fear in her heart.", "From that day on, the little card reminded them of trust."],
+        avoid: "不要突然喊口号，升华要从情节自然长出来。",
+      },
+    ],
+  },
+};
+
+const writingModels = {
+  advice: {
+    weak: "I am glad to hear from you. You said you are nervous about the speech. I think you should practise more and be confident. Chinese is interesting, so do not worry too much. I hope you can do well in the contest.",
+    strong:
+      "Dear Alex, I understand that speaking in public can be stressful. To feel more prepared, you can practise your speech in front of two classmates every evening and ask them to mark unclear words. It is also useful to record yourself, because you will notice your pauses and pronunciation more easily. With steady practice, the speech will become less frightening. I believe you can make real progress step by step. Yours, Li Hua",
+    upgrades: ["建议有具体对象和频率", "说明方法为什么有效", "结尾鼓励自然，不空喊口号"],
+  },
+  notice: {
+    weak: "There will be a reading meeting. It is interesting. Students can come and read books. I hope many students will join it.",
+    strong:
+      "Notice\nOur English Club will hold a book-sharing meeting in Room 302 at 4 p.m. this Friday. Each participant can introduce one English book, share a favorite sentence, and explain how the book has influenced him or her. Students who would like to join the meeting should sign up with their class monitor before Thursday noon. We are looking forward to your ideas and stories.\nEnglish Club",
+    upgrades: ["时间地点对象完整", "活动内容具体到动作", "报名方式清楚，通知文体简洁"],
+  },
+  "continuation-kindness": {
+    weak: "I was very moved. The stranger was kind. He helped me go to the competition. I won the game and thanked him. I learned that kindness is important.",
+    strong:
+      "I looked at the umbrella in the stranger's hand and hesitated. Seeing my wet shoes and shaking fingers, he smiled and opened the car door. On the way to the competition, I held the umbrella tightly, still hearing the rain beat against the window. When we arrived, I rushed out, turned back, and said, 'Thank you for not letting me give up.' He simply waved, as if it were a small thing.\nLater, standing on the stage, I suddenly felt less afraid. The umbrella was placed beside my bag, its edge still wet. It reminded me that courage sometimes comes from an unexpected act of kindness. After the competition, I decided to pass on that warmth whenever someone else was caught in the rain.",
+    upgrades: ["用 umbrella 回扣原文细节", "动作推动：hesitated, opened, held, rushed", "主题从故事里自然长出"],
+  },
+  "continuation-teamwork": {
+    weak: "The boy was nervous. Then they found the baton. Everyone was happy and they won the race. He knew teamwork was good.",
+    strong:
+      "The boy's face turned pale as his teammates waited in silence. He bent down and searched the grass again, but there was nothing except a few wet leaves. Taking a deep breath, he raised his head and admitted, 'I may have left it near the training bench.' Instead of blaming him, the captain immediately divided the team into pairs and led them back along the track.\nMinutes later, a teammate shouted from behind the bench. The baton lay there, half hidden under a towel. The boy grabbed it and ran back, his heart still racing but his steps steadier. When the race finally began, the baton passed from hand to hand smoothly. At that moment, he understood that a team was not built by perfect people, but by people who chose to face mistakes together.",
+    upgrades: ["先承认错误，再由团队行动解决", "保留 baton 原文物件", "结尾升华克制，贴合团队主题"],
+  },
+  defaultPractical: {
+    weak: "I think this activity is good. You can join it. It will be interesting and useful. Thank you.",
+    strong:
+      "I am writing to share a practical plan. The activity will begin at 4 p.m. in the school hall, and students can take part in group discussion, short presentations, and a final reflection. These steps will help everyone practise English in a real situation instead of only memorizing sentences. If you are interested, please sign up before Thursday. I hope you will enjoy the experience and gain something useful from it.",
+    upgrades: ["补齐活动信息", "说明活动价值", "结尾有明确行动"],
+  },
+  defaultContinuation: {
+    weak: "He was sad. Then he tried again. Everyone helped him. He was happy and learned a lesson.",
+    strong:
+      "He stood still for a moment, staring at the broken piece in his hand. Then he took a deep breath, walked toward his teammates, and told them what had happened. To his surprise, no one shouted. One girl picked up the tape, another searched for spare parts, and the captain asked him to hold the model steady. As their hands moved together, his fear slowly gave way to hope. When the model finally rose again, he understood that honesty and teamwork could repair more than a broken plane.",
+    upgrades: ["动作链连续", "人物情绪有变化", "结尾从情节中收束"],
+  },
+};
+
 const vocab = [
   "take responsibility for",
   "make steady progress",
@@ -1955,6 +2063,7 @@ function currentWritingMode() {
 function setActiveWritingTab(mode) {
   document.querySelectorAll(".tab").forEach((tab) => tab.classList.toggle("active", tab.dataset.tab === mode));
   renderWriting(mode);
+  renderWritingToolkit();
 }
 
 function currentWritingPrompt() {
@@ -1986,6 +2095,83 @@ function renderWritingPrompt() {
     <p>${prompt.prompt}</p>
     <ul>${prompt.mustHave.map((item) => `<li>${item}</li>`).join("")}</ul>
   `;
+  renderWritingToolkit();
+}
+
+function insertWritingText(text) {
+  const draft = document.getElementById("writingDraft");
+  const spacer = draft.value.trim() ? "\n" : "";
+  draft.value = `${draft.value}${spacer}${text}`;
+  state.draft = draft.value;
+  saveState();
+  updateDraftCount();
+  draft.focus();
+}
+
+function modelForCurrentPrompt() {
+  const prompt = currentWritingPrompt();
+  const mode = currentWritingMode();
+  return writingModels[prompt?.id] || writingModels[mode === "continuation" ? "defaultContinuation" : "defaultPractical"];
+}
+
+function renderWritingToolkit() {
+  const container = document.getElementById("writingToolkit");
+  if (!container) {
+    return;
+  }
+
+  const mode = currentWritingMode();
+  const toolkit = writingToolkit[mode] || writingToolkit.practical;
+  const model = modelForCurrentPrompt();
+  container.innerHTML = `
+    <div class="toolkit-head">
+      <div>
+        <span>Writing Toolkit</span>
+        <h3>${toolkit.title}</h3>
+      </div>
+      <p>${mode === "continuation" ? "先用动作链和原文回扣搭桥，再写情绪变化。" : "先定文体和任务，再调用句式，不让作文空泛。"}</p>
+    </div>
+    <div class="toolkit-grid">
+      ${toolkit.cards
+        .map(
+          (card) => `
+            <article class="toolkit-card">
+              <span>${card.tag}</span>
+              <h4>${card.title}</h4>
+              <ol>${card.steps.map((step) => `<li>${step}</li>`).join("")}</ol>
+              <div class="sentence-bank">
+                ${card.lines.map((line) => `<button type="button" data-insert-writing="${line}">${line}</button>`).join("")}
+              </div>
+              <p>${card.avoid}</p>
+            </article>
+          `
+        )
+        .join("")}
+    </div>
+    <div class="model-compare">
+      <article>
+        <span>Basic Draft</span>
+        <p>${model.weak}</p>
+      </article>
+      <article class="strong">
+        <span>Upgraded Draft</span>
+        <p>${model.strong}</p>
+        <button type="button" data-insert-model="${model.strong}">写入草稿</button>
+      </article>
+      <article>
+        <span>Upgrade Notes</span>
+        <ul>${model.upgrades.map((item) => `<li>${item}</li>`).join("")}</ul>
+      </article>
+    </div>
+  `;
+
+  document.querySelectorAll("[data-insert-writing]").forEach((button) => {
+    button.addEventListener("click", () => insertWritingText(button.dataset.insertWriting));
+  });
+
+  document.querySelectorAll("[data-insert-model]").forEach((button) => {
+    button.addEventListener("click", () => insertWritingText(button.dataset.insertModel));
+  });
 }
 
 function writingScoreDetail() {
