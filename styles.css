@@ -3079,6 +3079,179 @@ textarea {
   font-weight: 800;
 }
 
+.second-pass-plan {
+  display: grid;
+  gap: 14px;
+  margin-bottom: 14px;
+  padding: 16px;
+  border: 1px solid var(--line);
+  background: color-mix(in srgb, var(--paper) 88%, var(--bg));
+}
+
+.second-pass-head {
+  display: flex;
+  align-items: end;
+  justify-content: space-between;
+  gap: 14px;
+}
+
+.second-pass-head span,
+.second-pass-day-head span {
+  display: block;
+  margin-bottom: 4px;
+  color: var(--orange);
+  font-size: 12px;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+.second-pass-head strong {
+  display: block;
+  font-size: 24px;
+}
+
+.second-pass-head p,
+.second-pass-day p,
+.second-pass-empty p {
+  margin: 6px 0 0;
+  color: var(--muted);
+  line-height: 1.65;
+}
+
+.second-pass-head button,
+.second-pass-actions button,
+.second-pass-empty button,
+.second-pass-items button {
+  min-height: 36px;
+  border: 1px solid var(--ink);
+  background: var(--paper);
+  color: var(--ink);
+  padding: 8px 11px;
+  cursor: pointer;
+  font-weight: 900;
+}
+
+.second-pass-head button:hover,
+.second-pass-actions button:hover,
+.second-pass-empty button:hover,
+.second-pass-items button:hover {
+  background: var(--ink);
+  color: var(--paper);
+}
+
+.second-pass-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+}
+
+.second-pass-day {
+  display: grid;
+  gap: 12px;
+  padding: 14px;
+  border: 1px solid var(--line);
+  background: var(--bg);
+}
+
+.second-pass-day.done {
+  border-color: var(--green);
+  background: color-mix(in srgb, var(--green) 8%, var(--paper));
+}
+
+.second-pass-day-head,
+.second-pass-actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.second-pass-day-head time {
+  color: var(--green);
+  font-size: 12px;
+  font-weight: 900;
+}
+
+.second-pass-day h3 {
+  margin: 0;
+  font-size: 19px;
+}
+
+.second-pass-action {
+  padding: 10px;
+  border-left: 4px solid var(--green);
+  background: color-mix(in srgb, var(--green) 8%, var(--paper));
+  color: var(--ink);
+  font-size: 13px;
+  font-weight: 900;
+}
+
+.second-pass-items {
+  display: grid;
+  gap: 8px;
+}
+
+.second-pass-items button {
+  display: grid;
+  gap: 3px;
+  min-height: 0;
+  border-color: var(--line);
+  text-align: left;
+  font-weight: 800;
+  line-height: 1.45;
+}
+
+.second-pass-items b {
+  color: var(--green);
+  font-size: 12px;
+}
+
+.second-pass-items span {
+  color: var(--orange);
+  font-size: 12px;
+  font-weight: 900;
+}
+
+.second-pass-items em {
+  color: var(--muted);
+  line-height: 1.6;
+}
+
+.second-pass-actions {
+  align-items: stretch;
+  flex-wrap: wrap;
+}
+
+.second-pass-actions button {
+  flex: 1 1 86px;
+  min-width: 0;
+  padding-inline: 8px;
+}
+
+.second-pass-actions label {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 36px;
+  color: var(--muted);
+  font-size: 13px;
+  font-weight: 900;
+}
+
+.second-pass-actions input {
+  width: 16px;
+  height: 16px;
+  accent-color: var(--green);
+}
+
+.second-pass-empty {
+  display: grid;
+  gap: 10px;
+  padding: 14px;
+  border: 1px dashed var(--line);
+  background: var(--bg);
+}
+
 .mistake-grid {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
@@ -3210,6 +3383,7 @@ textarea {
   .module-grid,
   .mistake-grid,
   .library-grid,
+  .second-pass-grid,
   .score-blueprint-grid {
     grid-template-columns: repeat(2, 1fr);
   }
@@ -3272,8 +3446,14 @@ textarea {
 
   .mistake-console,
   .today-review,
+  .second-pass-head,
   .writing-diagnosis {
     grid-template-columns: 1fr;
+  }
+
+  .second-pass-head {
+    align-items: start;
+    flex-direction: column;
   }
 
   .mistake-summary,
@@ -3309,6 +3489,7 @@ textarea {
   .module-grid,
   .mistake-grid,
   .library-grid,
+  .second-pass-grid,
   .score-blueprint-grid {
     grid-template-columns: 1fr;
   }
@@ -3408,6 +3589,21 @@ textarea {
   .mistake-summary,
   .mistake-filters {
     grid-template-columns: 1fr;
+  }
+
+  .second-pass-plan {
+    padding: 12px;
+  }
+
+  .second-pass-day-head,
+  .second-pass-actions {
+    align-items: start;
+    flex-direction: column;
+  }
+
+  .second-pass-actions button,
+  .second-pass-actions label {
+    width: 100%;
   }
 
   .report-grid {

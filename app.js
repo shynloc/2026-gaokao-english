@@ -27,6 +27,7 @@ state.weeklyIntensity = state.weeklyIntensity || "75";
 state.weeklyDone = state.weeklyDone || {};
 state.reviewStatus = state.reviewStatus || {};
 state.mistakeFilters = state.mistakeFilters || { type: "all", tag: "all", status: "all" };
+state.secondPassDone = state.secondPassDone || {};
 state.sprintRoute = state.sprintRoute || "30";
 
 const externalContent = window.E26_CONTENT || {};
@@ -2770,11 +2771,230 @@ function renderTodayReview(items) {
   `;
 }
 
+const secondPassBlueprint = [
+  {
+    id: "day1",
+    label: "Day 1",
+    title: "先打穿仍不会",
+    focus: "把仍不会和高压错因先拿出来，口头复述错因后再看答案。",
+    action: "复述错因 + 同题型限时 1 题",
+    statuses: ["stuck"],
+    fallback: ["todo", "restated"],
+    filter: "stuck",
+  },
+  {
+    id: "day2",
+    label: "Day 2",
+    title: "重写解题动作",
+    focus: "把待复述和已复述题改写成具体动作，避免只记住答案。",
+    action: "写判断步骤 + 反向解释干扰项",
+    statuses: ["todo", "restated"],
+    fallback: ["stuck"],
+    filter: "todo",
+  },
+  {
+    id: "day3",
+    label: "Day 3",
+    title: "二刷确认归档",
+    focus: "用新题验证同类错误是否消失，能稳定说清再标记二刷完成。",
+    action: "同类新题验证 + 标二刷完成",
+    statuses: ["restated", "todo", "stuck"],
+    fallback: ["todo"],
+    filter: "restated",
+  },
+];
+
+function localDateKey(offset = 0) {
+  const date = new Date();
+  date.setDate(date.getDate() + offset);
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
+}
+
+function secondPassDoneKey(dayId) {
+  return `${localDateKey()}:${dayId}`;
+}
+
+function mistakeTagFrequency(items) {
+  return items.reduce((counts, item) => {
+    item.tags.forEach((tagId) => {
+      counts[tagId] = (counts[tagId] || 0) + 1;
+    });
+    return counts;
+  }, {});
+}
+
+function secondPassPriority(item, tagFrequency) {
+  const statusWeight = { stuck: 70, todo: 42, restated: 24, second: 0 };
+  const status = reviewStatus(item.id);
+  const tagPressure = Math.max(0, ...item.tags.map((tagId) => tagFrequency[tagId] || 0));
+  const sourceBoost = item.id.includes("mock:") || item.source === "收藏回炉" ? 8 : 0;
+  return (statusWeight[status] || 0) + tagPressure * 3 + sourceBoost;
+}
+
+function secondPassCandidates(items) {
+  const tagFrequency = mistakeTagFrequency(items);
+  return items
+    .filter((item) => reviewStatus(item.id) !== "second")
+    .map((item) => ({
+      ...item,
+      status: reviewStatus(item.id),
+      priority: secondPassPriority(item, tagFrequency),
+    }))
+    .sort((a, b) => b.priority - a.priority || a.title.localeCompare(b.title, "zh-CN"));
+}
+
+function pickSecondPassItems(candidates, used, primaryStatuses, fallbackStatuses, limit) {
+  const pickFrom = (statuses) =>
+    candidates.filter((item) => !used.has(item.id) && statuses.includes(item.status)).slice(0, limit);
+  let selected = pickFrom(primaryStatuses);
+  if (selected.length < limit) {
+    const fallback = pickFrom(fallbackStatuses).filter((item) => !selected.some((current) => current.id === item.id));
+    selected = [...selected, ...fallback].slice(0, limit);
+  }
+  selected.forEach((item) => used.add(item.id));
+  return selected;
+}
+
+function buildSecondPassPlan(items) {
+  const candidates = secondPassCandidates(items);
+  const used = new Set();
+  const perDay = Math.max(1, Math.ceil(candidates.length / 3));
+
+  return secondPassBlueprint.map((day, index) => {
+    const limit = Math.min(index === 0 ? 3 : 4, perDay);
+    return {
+      ...day,
+      date: localDateKey(index),
+      done: Boolean(state.secondPassDone[secondPassDoneKey(day.id)]),
+      items: pickSecondPassItems(candidates, used, day.statuses, [...day.fallback, "todo", "restated", "stuck"], limit),
+    };
+  });
+}
+
+function secondPassPracticeType(type) {
+  return modules.some((module) => module.id === type) ? type : "reading";
+}
+
+function renderSecondPassPlan(items) {
+  const container = document.getElementById("secondPassPlan");
+  if (!container) {
+    return;
+  }
+
+  const candidates = secondPassCandidates(items);
+  const plan = buildSecondPassPlan(items);
+  const stuckCount = candidates.filter((item) => item.status === "stuck").length;
+  const leadType = candidates[0]?.type || "reading";
+
+  container.innerHTML = `
+    <div class="second-pass-head">
+      <div>
+        <span>Second Pass</span>
+        <strong>三日二刷计划</strong>
+        <p>${
+          candidates.length
+            ? `${candidates.length} 题待回炉，先压 ${stuckCount} 个“仍不会”点，再用同类题验证。`
+            : "当前没有待二刷错题，可以继续做专项或模拟，把新错题加入回炉池。"
+        }</p>
+      </div>
+      <button type="button" data-second-pass-weekly>同步周计划</button>
+    </div>
+    ${
+      candidates.length
+        ? `<div class="second-pass-grid">
+            ${plan
+              .map(
+                (day, index) => `
+                  <article class="second-pass-day ${day.done ? "done" : ""}">
+                    <div class="second-pass-day-head">
+                      <span>${day.label}</span>
+                      <time>${day.date}</time>
+                    </div>
+                    <h3>${day.title}</h3>
+                    <p>${day.focus}</p>
+                    <div class="second-pass-action">${day.action}</div>
+                    <div class="second-pass-items">
+                      ${
+                        day.items.length
+                          ? day.items
+                              .map(
+                                (item) => `
+                                  <button type="button" data-second-pass-review="${item.id}">
+                                    <b>${moduleTitle(item.type)}</b>
+                                    <span>${statusLabel(item.status)}</span>
+                                    ${item.title}
+                                  </button>
+                                `
+                              )
+                              .join("")
+                          : `<em>今天只复盘前两天输出，保持错因清单干净。</em>`
+                      }
+                    </div>
+                    <div class="second-pass-actions">
+                      <button type="button" data-second-pass-filter="${day.filter}">看${statusLabel(day.filter)}</button>
+                      <button type="button" data-second-pass-practice="${secondPassPracticeType(day.items[0]?.type || leadType)}">练同类题</button>
+                      <label>
+                        <input type="checkbox" data-second-pass-done="${day.id}" ${day.done ? "checked" : ""} />
+                        完成
+                      </label>
+                    </div>
+                  </article>
+                `
+              )
+              .join("")}
+          </div>`
+        : `<div class="second-pass-empty">
+            <strong>回炉池暂时清空</strong>
+            <p>继续做 1 组阅读或语法专项，答错后点“收藏回炉”，这里会自动生成下一轮二刷。</p>
+            <button type="button" data-second-pass-practice="${secondPassPracticeType(leadType)}">去做专项</button>
+          </div>`
+    }
+  `;
+
+  document.querySelectorAll("[data-second-pass-review]").forEach((button) => {
+    button.addEventListener("click", () => openMistakeReview(button.dataset.secondPassReview));
+  });
+
+  document.querySelectorAll("[data-second-pass-filter]").forEach((button) => {
+    button.addEventListener("click", () => {
+      state.mistakeFilters = { ...state.mistakeFilters, status: button.dataset.secondPassFilter };
+      saveState();
+      renderMistakes();
+      document.getElementById("mistakeGrid").scrollIntoView({ behavior: "smooth", block: "start" });
+    });
+  });
+
+  document.querySelectorAll("[data-second-pass-practice]").forEach((button) => {
+    button.addEventListener("click", () => {
+      openLibraryTarget("practice", button.dataset.secondPassPractice);
+    });
+  });
+
+  document.querySelectorAll("[data-second-pass-done]").forEach((input) => {
+    input.addEventListener("change", () => {
+      state.secondPassDone[secondPassDoneKey(input.dataset.secondPassDone)] = input.checked;
+      saveState();
+      renderMistakes();
+    });
+  });
+
+  document.querySelectorAll("[data-second-pass-weekly]").forEach((button) => {
+    button.addEventListener("click", () => {
+      renderWeeklyPlan();
+      document.getElementById("plan").scrollIntoView({ behavior: "smooth", block: "start" });
+    });
+  });
+}
+
 function renderMistakes() {
   const items = allMistakes();
   const filtered = filteredMistakes();
   renderMistakeFilters(items);
   renderMistakeSummary(items);
+  renderSecondPassPlan(items);
   renderTodayReview(filtered);
 
   document.getElementById("mistakeGrid").innerHTML = filtered.length
@@ -2824,6 +3044,7 @@ function renderMistakes() {
       saveState();
       renderMistakes();
       renderReport();
+      renderWeeklyPlan();
     });
   });
 }
@@ -3468,6 +3689,7 @@ function submitMockExam() {
   renderReviewQueue();
   renderMistakes();
   renderReport();
+  renderWeeklyPlan();
   document.getElementById("mockReport").scrollIntoView({ behavior: "smooth", block: "start" });
 }
 
@@ -3745,6 +3967,7 @@ function saveForReview(type, item) {
   renderReviewQueue();
   renderMistakes();
   renderReport();
+  renderWeeklyPlan();
 }
 
 function renderPractice(type) {
@@ -4206,6 +4429,7 @@ document.getElementById("mistakeForm").addEventListener("submit", (event) => {
   saveState();
   renderMistakes();
   renderReport();
+  renderWeeklyPlan();
 });
 
 document.getElementById("themeToggle").addEventListener("click", () => {
